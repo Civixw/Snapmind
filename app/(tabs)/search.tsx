@@ -212,9 +212,9 @@ export default function SearchScreen() {
           {recentSearches.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Recent Searches</Text>
+                <Text style={styles.sectionTitle}>最近搜索</Text>
                 <TouchableOpacity onPress={() => clearRecentSearches()}>
-                  <Text style={styles.clearAllText}>Clear All</Text>
+                  <Text style={styles.clearAllText}>全部清除</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.chipRow}>
@@ -245,7 +245,6 @@ export default function SearchScreen() {
                   <ImageBackground
                     source={{ uri: rec.image }}
                     style={styles.recommendImageBg}
-                    imageStyle={styles.recommendImage}
                   >
                     <LinearGradient
                       colors={['transparent', 'rgba(0,0,0,0.6)']}
@@ -364,12 +363,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   recommendCard: {
-    width: '47%',
+    flex: 1,
     height: 176,
     borderRadius: borderRadius['2xl'],
     overflow: 'hidden',
   },
   recommendCardWide: {
+    flex: 0,
     width: '100%',
   },
   recommendImageBg: {
@@ -377,7 +377,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   recommendImage: {
-    borderRadius: borderRadius['2xl'],
   },
   recommendOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, borderRadius, shadows } from '../constants/theme';
 
@@ -48,21 +48,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: '#ffffff',
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
     gap: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
-    ...shadows.card,
+    ...(Platform.OS === 'ios' ? shadows.card : {}),
   },
   iconWrapper: {
     marginLeft: 8,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: colors.onSurface,
     backgroundColor: 'transparent',
   },

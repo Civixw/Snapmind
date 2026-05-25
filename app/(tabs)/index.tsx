@@ -185,13 +185,12 @@ const styles = StyleSheet.create({
   titleGradientBg: {
     paddingHorizontal: 2,
     paddingVertical: 0,
-    backgroundColor: '#ab3500',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
     fontFamily: 'Quicksand_700Bold',
-    color: '#fff',
+    color: colors.primary,
   },
   headerRight: {
     flexDirection: 'row',
