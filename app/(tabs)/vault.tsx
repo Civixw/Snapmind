@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import ScreenshotCard from '../../components/ScreenshotCard';
-import { getTopScreenshots } from '../../services/scoring';
+import { getTopScreenshots, recalculateAllScores } from '../../services/scoring';
 import { colors, borderRadius } from '../../constants/theme';
 import type { Screenshot } from '../../services/database';
 
@@ -40,6 +40,10 @@ export default function VaultScreen() {
   const loadVault = async (window: TimeWindow, autoDowngrade: boolean = true) => {
     setLoading(true);
     try {
+      // Refresh all scores in background before loading vault content
+      // Fire-and-forget: don't block the UI
+      void recalculateAllScores();
+
       const days = window === 'week' ? 7 : 30;
       const results = await getTopScreenshots(days, 24);
 

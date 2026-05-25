@@ -17,7 +17,7 @@ import {
 import { colors } from '../constants/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useStore } from '../store';
-import { backfillImportanceScores } from '../services/scoring';
+import { backfillImportanceScores, recalculateAllScores } from '../services/scoring';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,6 +42,10 @@ export default function RootLayout() {
       try {
         // One-time backfill for existing screenshots without importance scores
         await backfillImportanceScores();
+
+        // Background: refresh all scores to apply time decay
+        // Fire-and-forget: don't block app initialization
+        void recalculateAllScores();
       } catch (error) {
         console.error('[Init] Failed to backfill scores:', error);
       }
