@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "SnapMind",
+    "slug": "snapmind",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "snapmind",
+    "jsEngine": "hermes",
+    "newArchEnabled": false,
+    "splash": {
+      "backgroundColor": "#fff8f4"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.snapmind.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#fff8f4"
+      },
+      "package": "com.snapmind.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "3aec4f77-8560-4709-afed-cd7b3803e74b"
+      }
+    },
+    "owner": "civixw"
+  }
+}
