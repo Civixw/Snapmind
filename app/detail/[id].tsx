@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform,
+  View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform, Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ export default function DetailScreen() {
   const [ocrExpanded, setOcrExpanded] = useState(false);
   const [addingTag, setAddingTag] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [imageHeight, setImageHeight] = useState(400);
 
   useEffect(() => {
     const loadData = async () => {
@@ -160,23 +161,16 @@ export default function DetailScreen() {
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Full Image */}
-        <Image source={{ uri: screenshot.image_path }} style={styles.image} />
-
-        {/* Action Buttons */}
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.shareBtn}>
-            <LinearGradient colors={['#ff6b35', '#ab3500']} style={styles.actionGradient}>
-              <Ionicons name="share-outline" size={20} color="#fff" />
-              <Text style={styles.actionBtnText}>分享</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.saveBtn}>
-            <View style={styles.saveBtnInner}>
-              <Ionicons name="download-outline" size={20} color={colors.primary} />
-              <Text style={styles.saveBtnText}>保存</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        <Image
+          source={{ uri: screenshot.image_path }}
+          style={[styles.image, { height: imageHeight }]}
+          onLoad={(e) => {
+            const { width, height } = e.nativeEvent.source;
+            const screenWidth = Dimensions.get('window').width;
+            const calculatedHeight = (height / width) * screenWidth;
+            setImageHeight(calculatedHeight);
+          }}
+        />
 
         {/* AI Summary */}
         <View style={styles.section}>
@@ -288,35 +282,8 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   image: {
     width: '100%',
-    aspectRatio: 9 / 16,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: '#000',
   },
-  actions: { flexDirection: 'row', paddingHorizontal: 20, marginTop: 24, gap: 16 },
-  shareBtn: { flex: 1 },
-  saveBtn: { flex: 1 },
-  actionGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: borderRadius.full,
-    ...shadows.fab,
-  },
-  actionBtnText: { color: '#fff', fontSize: 14, fontWeight: '500' },
-  saveBtnInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(171, 53, 0, 0.3)',
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
-  saveBtnText: { color: colors.primary, fontSize: 14, fontWeight: '500' },
   section: { paddingHorizontal: 20, marginTop: 24 },
   summaryCard: { padding: 20 },
   summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },

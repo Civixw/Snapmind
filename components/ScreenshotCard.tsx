@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import GlassCard from './GlassCard';
-import { colors, borderRadius } from '../constants/theme';
+import { colors, borderRadius, shadows } from '../constants/theme';
 
 const ASPECT_RATIOS = [4 / 5, 1, 16 / 9, 3 / 4];
 
@@ -51,39 +50,45 @@ export default function ScreenshotCard({ id, imagePath, summary, category, tags:
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.wrapper}>
-      <GlassCard style={styles.card}>
-        <View style={[styles.imageWrapper, { aspectRatio }]}>
-          {imageError ? (
-            <View style={styles.imageError}>
-              <Ionicons name="image-outline" size={32} color={colors.outlineVariant} />
+      {/* 外层：只负责阴影 */}
+      <View style={styles.cardShadow}>
+        {/* 内层：负责背景、圆角、裁剪 */}
+        <View style={styles.cardClip}>
+          <View style={[styles.imageWrapper, { aspectRatio }]}>
+            {imageError ? (
+              <View style={styles.imageError}>
+                <Ionicons name="image-outline" size={32} color={colors.outlineVariant} />
+              </View>
+            ) : (
+              <Image
+                source={{ uri: imagePath }}
+                style={styles.image}
+                resizeMode="cover"
+                onError={() => setImageError(true)}
+              />
+            )}
+            <View style={[styles.categoryBadge, { backgroundColor: badge.bg }]}>
+              <Text style={[styles.categoryLabel, { color: badge.text }]}>{category}</Text>
             </View>
-          ) : (
-            <Image
-              source={{ uri: imagePath }}
-              style={styles.image}
-              resizeMode="cover"
-              onError={() => setImageError(true)}
-            />
-          )}
-          <View style={[styles.categoryBadge, { backgroundColor: badge.bg }]}>
-            <Text style={[styles.categoryLabel, { color: badge.text }]}>{category}</Text>
+          </View>
+          <View style={styles.contentArea}>
+            <Text style={styles.summary} numberOfLines={2}>{summary}</Text>
+            {displayTags.length > 0 && (
+              <View style={styles.tagsRow}>
+                {displayTags.map((tag, i) => {
+                  const tc = TAG_COLORS[i % TAG_COLORS.length];
+                  return (
+                    <View key={i} style={[styles.miniTag, { backgroundColor: tc.bg }]}>
+                      <Text style={[styles.miniTagText, { color: tc.text }]}>{tag}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+            <Text style={styles.date}>{formatDate(createdAt)}</Text>
           </View>
         </View>
-        <Text style={styles.summary} numberOfLines={2}>{summary}</Text>
-        {displayTags.length > 0 && (
-          <View style={styles.tagsRow}>
-            {displayTags.map((tag, i) => {
-              const tc = TAG_COLORS[i % TAG_COLORS.length];
-              return (
-                <View key={i} style={[styles.miniTag, { backgroundColor: tc.bg }]}>
-                  <Text style={[styles.miniTagText, { color: tc.text }]}>{tag}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-        <Text style={styles.date}>{formatDate(createdAt)}</Text>
-      </GlassCard>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -102,7 +107,18 @@ const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
   },
-  card: {
+  cardShadow: {
+    borderRadius: borderRadius.xl,
+    ...shadows.card,
+  },
+  cardClip: {
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    overflow: 'hidden',
+  },
+  contentArea: {
     padding: 12,
     gap: 8,
   },

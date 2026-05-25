@@ -6,7 +6,7 @@ import GlassCard from '../../components/GlassCard';
 import { deleteScreenshot, getAllScreenshots } from '../../services/database';
 import { useStore, useScreenshotCount } from '../../store';
 import { deleteImage } from '../../services/image';
-import { colors, gradientColors, borderRadius, shadows } from '../../constants/theme';
+import { colors, borderRadius, shadows } from '../../constants/theme';
 
 export default function SettingsScreen() {
   const screenshotCount = useScreenshotCount();
@@ -81,14 +81,7 @@ export default function SettingsScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.headerTitleWrapper}>
-          <LinearGradient
-            colors={['#ff6b35', '#ab3500']}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={styles.headerTitleBg}
-          >
-            <Text style={styles.headerTitle}>设置</Text>
-          </LinearGradient>
+          <Text style={styles.headerTitle}>设置</Text>
         </View>
       </View>
 
@@ -147,7 +140,7 @@ export default function SettingsScreen() {
       {/* General */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>通用</Text>
-        <GlassCard>
+        <GlassCard style={styles.generalCard}>
           <SettingRow icon="notifications-outline" label="通知设置" />
           <View style={styles.divider} />
           <SettingRow icon="color-palette-outline" label="外观与主题" />
@@ -217,9 +210,8 @@ const settingStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 },
-  headerTitleWrapper: { overflow: 'hidden', borderRadius: 4 },
-  headerTitleBg: { paddingHorizontal: 2 },
-  headerTitle: { fontSize: 24, fontWeight: '700', fontFamily: 'Quicksand_700Bold', color: '#fff' },
+  headerTitleWrapper: {},
+  headerTitle: { fontSize: 24, fontWeight: '700', fontFamily: 'Quicksand_700Bold', color: colors.primary },
   section: { paddingHorizontal: 20, marginBottom: 24 },
   sectionTitle: {
     fontSize: 20, fontWeight: '600', color: colors.onSurfaceVariant,
@@ -250,6 +242,7 @@ const styles = StyleSheet.create({
   statsBarFill: { height: '100%', backgroundColor: colors.primaryLight, borderRadius: 4 },
   statsSubtext: { fontSize: 14, fontWeight: '500', color: 'rgba(89, 65, 57, 0.7)', marginTop: 8 },
   apiCard: { padding: 20 },
+  generalCard: { paddingVertical: 8, paddingLeft: 24, paddingRight: 12 },
   apiHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
   apiTitle: { fontSize: 16, fontWeight: '700', color: colors.onSurface },
   apiInputRow: {

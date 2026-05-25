@@ -3,7 +3,6 @@ import { View, ScrollView, Text, StyleSheet, TouchableOpacity, ActivityIndicator
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import SearchBar from '../../components/SearchBar';
 import CategoryFilter from '../../components/CategoryFilter';
 import ScreenshotCard from '../../components/ScreenshotCard';
 import ImportModal from '../../components/ImportModal';
@@ -87,11 +86,6 @@ export default function HomeScreen() {
             <Ionicons name="person" size={18} color={colors.primary} />
           </View>
         </View>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <SearchBar editable={false} onPress={() => router.push('/search')} />
       </View>
 
       {/* Category Filter */}
@@ -214,10 +208,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
   },
   categoryContainer: {
     height: 44,

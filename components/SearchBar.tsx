@@ -22,7 +22,9 @@ export default function SearchBar({
 }: Props) {
   const input = (
     <View style={styles.container}>
-      <Ionicons name="search" size={20} color={colors.primary} />
+      <View style={styles.iconWrapper}>
+        <Ionicons name="search" size={20} color={colors.primary} />
+      </View>
       <TextInput
         style={styles.input}
         placeholder={placeholder}
@@ -55,9 +57,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
     ...shadows.card,
   },
+  iconWrapper: {
+    marginLeft: 8,
+  },
   input: {
     flex: 1,
     fontSize: 16,
     color: colors.onSurface,
+    backgroundColor: 'transparent',
   },
 });
