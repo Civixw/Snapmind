@@ -90,8 +90,9 @@ export async function updateScreenshotScore(screenshotId: string): Promise<void>
       return;
     }
 
-    // Use importance_score as base score (defaults to 0 if null)
-    const baseScore = screenshot.importance_score ?? 0;
+    // Use base_score as the fixed initial score
+    // If base_score is null, fall back to importance_score, then default to 50
+    const baseScore = screenshot.base_score ?? screenshot.importance_score ?? 50;
     const importDate = screenshot.created_at;
 
     // Get interaction counts within default scoring window
@@ -111,7 +112,7 @@ export async function updateScreenshotScore(screenshotId: string): Promise<void>
       screenshotId,
       ':',
       calculation.finalScore,
-      '(base:',
+      '(fixed_base:',
       baseScore,
       'decay:',
       calculation.timeDecay.toFixed(3),
@@ -176,7 +177,7 @@ export async function getTopScreenshots(
     console.log('[Scoring] Getting top', limit, 'screenshots since', cutoffIso);
 
     const results = await database.getAllAsync<Screenshot>(
-      `SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at
+      `SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score
        FROM screenshots
        WHERE created_at >= ?
        ORDER BY importance_score DESC, created_at DESC
@@ -194,7 +195,7 @@ export async function getTopScreenshots(
 
 /**
  * One-time migration to backfill importance scores
- * Sets importance_score = 50 for screenshots where score IS NULL or = 0
+ * Sets base_score = 50 and importance_score = 50 for screenshots where they are NULL or = 0
  */
 export async function backfillImportanceScores(): Promise<number> {
   try {
@@ -202,7 +203,7 @@ export async function backfillImportanceScores(): Promise<number> {
 
     // Count screenshots needing backfill
     const countResult = await database.getFirstAsync<{ count: number }>(
-      `SELECT COUNT(*) as count FROM screenshots WHERE importance_score IS NULL OR importance_score = 0`
+      `SELECT COUNT(*) as count FROM screenshots WHERE base_score IS NULL OR base_score = 0`
     );
     const count = countResult?.count ?? 0;
 
@@ -211,14 +212,14 @@ export async function backfillImportanceScores(): Promise<number> {
       return 0;
     }
 
-    console.log('[Scoring] Backfilling importance scores for', count, 'screenshots');
+    console.log('[Scoring] Backfilling scores for', count, 'screenshots');
 
     // Update screenshots with default score
     const now = new Date().toISOString();
     await database.runAsync(
       `UPDATE screenshots
-       SET importance_score = 50, score_updated_at = ?
-       WHERE importance_score IS NULL OR importance_score = 0`,
+       SET base_score = 50, importance_score = 50, score_updated_at = ?
+       WHERE base_score IS NULL OR base_score = 0`,
       [now]
     );
 

@@ -11,6 +11,7 @@ export interface Screenshot {
   created_at: string;
   importance_score?: number;
   score_updated_at?: string;
+  base_score?: number;
 }
 
 export interface UserInteraction {
@@ -23,9 +24,11 @@ export interface UserInteraction {
 // Database version constants
 // Version 2: Added user_interactions table
 // Version 3: Added importance_score columns to screenshots table
-const DB_VERSION = 3;
+// Version 4: Added base_score column to screenshots table (separate from dynamic importance_score)
+const DB_VERSION = 4;
 const USER_INTERACTIONS_VERSION = 2;
 const SCORES_VERSION = 3;
+const BASE_SCORE_VERSION = 4;
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -168,9 +171,47 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 
         // Update database version to 3
         await db.execAsync(`PRAGMA user_version = ${SCORES_VERSION}`);
+        currentVersion = SCORES_VERSION; // Update local version for next check
         console.log('[DB] Migration to version', SCORES_VERSION, 'completed successfully');
       } catch (e) {
         console.error('[DB] Migration to version', SCORES_VERSION, 'failed:', e);
+        throw e;
+      }
+    }
+
+    // Migration for base_score column (version 4) - runs after version 3
+    if (currentVersion < BASE_SCORE_VERSION) {
+      console.log('[DB] Migrating to version', BASE_SCORE_VERSION, '- adding base_score column');
+      try {
+        // Check if column already exists
+        const tableInfo = await db.getAllAsync<{ name: string }>(
+          "PRAGMA table_info(screenshots)"
+        );
+        const columnNames = tableInfo.map(col => col.name);
+        const hasBaseScore = columnNames.includes('base_score');
+
+        if (!hasBaseScore) {
+          console.log('[DB] Adding base_score column');
+          await db.execAsync('ALTER TABLE screenshots ADD COLUMN base_score INTEGER DEFAULT 50');
+
+          // Initialize base_score with current importance_score values (or 50 if null/0)
+          await db.execAsync(`
+            UPDATE screenshots
+            SET base_score = CASE
+              WHEN importance_score IS NULL OR importance_score = 0 THEN 50
+              ELSE importance_score
+            END
+          `);
+          console.log('[DB] Initialized base_score for existing screenshots');
+        } else {
+          console.log('[DB] base_score column already exists, skipping');
+        }
+
+        // Update database version to 4
+        await db.execAsync(`PRAGMA user_version = ${BASE_SCORE_VERSION}`);
+        console.log('[DB] Migration to version', BASE_SCORE_VERSION, 'completed successfully');
+      } catch (e) {
+        console.error('[DB] Migration to version', BASE_SCORE_VERSION, 'failed:', e);
         throw e;
       }
     }
@@ -188,11 +229,12 @@ export async function insertScreenshot(screenshot: Screenshot): Promise<void> {
 
   // 插入主表，让SQLite自动生成rowid
   const result = await database.runAsync(
-    `INSERT INTO screenshots (id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO screenshots (id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [screenshot.id, screenshot.image_path, screenshot.raw_text, screenshot.summary,
      screenshot.category, screenshot.tags, screenshot.embedding, screenshot.created_at,
-     screenshot.importance_score ?? 0, screenshot.score_updated_at ?? null]
+     screenshot.importance_score ?? 0, screenshot.score_updated_at ?? null,
+     screenshot.base_score ?? screenshot.importance_score ?? 50]
   );
 
   // 对于expo-sqlite，lastInsertRowId可能不存在，回退到查询
@@ -237,13 +279,13 @@ export async function getAllScreenshots(
   if (category && category !== 'all') {
     console.log('[DB] 按category查询:', category);
     result = await database.getAllAsync<Screenshot>(
-      'SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at FROM screenshots WHERE category = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      'SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score FROM screenshots WHERE category = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
       [category, limit, offset]
     );
   } else {
     console.log('[DB] 查询所有数据');
     result = await database.getAllAsync<Screenshot>(
-      'SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at FROM screenshots ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      'SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score FROM screenshots ORDER BY created_at DESC LIMIT ? OFFSET ?',
       [limit, offset]
     );
   }
@@ -257,7 +299,7 @@ export async function getAllScreenshots(
 export async function getScreenshotById(id: string): Promise<Screenshot | null> {
   const database = await getDatabase();
   return database.getFirstAsync<Screenshot>(
-    'SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at FROM screenshots WHERE id = ?', [id]
+    'SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score FROM screenshots WHERE id = ?', [id]
   );
 }
 
@@ -265,7 +307,7 @@ export async function searchByKeyword(query: string): Promise<Screenshot[]> {
   const database = await getDatabase();
   const likeQuery = `%${query}%`;
   return database.getAllAsync<Screenshot>(
-    `SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at FROM screenshots
+    `SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score FROM screenshots
      WHERE summary LIKE ? OR raw_text LIKE ? OR tags LIKE ? OR category LIKE ?
      ORDER BY created_at DESC LIMIT 50`,
     [likeQuery, likeQuery, likeQuery, likeQuery]
@@ -273,7 +315,7 @@ export async function searchByKeyword(query: string): Promise<Screenshot[]> {
 }
 
 export async function updateScreenshot(
-  id: string, updates: Partial<Pick<Screenshot, 'tags' | 'category' | 'summary' | 'importance_score' | 'score_updated_at'>>
+  id: string, updates: Partial<Pick<Screenshot, 'tags' | 'category' | 'summary' | 'importance_score' | 'score_updated_at' | 'base_score'>>
 ): Promise<void> {
   const database = await getDatabase();
   const sets: string[] = [];

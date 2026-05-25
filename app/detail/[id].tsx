@@ -10,6 +10,7 @@ import TagChip from '../../components/TagChip';
 import { getScreenshotById, deleteScreenshot, updateScreenshot, Screenshot } from '../../services/database';
 import { deleteImage } from '../../services/image';
 import { recordView } from '../../services/interactions';
+import { updateScreenshotScore } from '../../services/scoring';
 import { colors, gradientColors, borderRadius, shadows } from '../../constants/theme';
 
 export default function DetailScreen() {
@@ -22,6 +23,7 @@ export default function DetailScreen() {
   const [addingTag, setAddingTag] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [imageHeight, setImageHeight] = useState(400);
+  const recordedViewRef = React.useRef<string | null>(null); // Track recorded views to prevent duplicates
 
   useEffect(() => {
     const loadData = async () => {
@@ -86,14 +88,25 @@ export default function DetailScreen() {
     loadData();
   }, [id]);
 
-  // Track view when screen gains focus
+  // Track view when screen gains focus (with deduplication)
   useFocusEffect(
     useCallback(() => {
-      if (id) {
-        // Fire-and-forget: record view analytics without awaiting
-        recordView(id);
+      if (id && recordedViewRef.current !== id) {
+        // Mark this screenshot as viewed for this session
+        recordedViewRef.current = id;
+
+        // Record view and update score (fire-and-forget)
+        void (async () => {
+          try {
+            await recordView(id);
+            // Update score in background, don't block UI
+            void updateScreenshotScore(id);
+          } catch (error) {
+            console.warn('[Detail] Failed to record view/update score:', error);
+          }
+        })();
       }
-    }, [id, recordView])
+    }, [id])
   );
 
   const handleDelete = () => {

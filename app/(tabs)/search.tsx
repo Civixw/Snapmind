@@ -8,6 +8,7 @@ import ScreenshotCard from '../../components/ScreenshotCard';
 import { getAllScreenshots, searchByKeyword, Screenshot } from '../../services/database';
 import { getEmbedding, semanticSearch } from '../../services/ai';
 import { recordSearchHit } from '../../services/interactions';
+import { updateScreenshotScore } from '../../services/scoring';
 import { colors, borderRadius, gradientColors, shadows } from '../../constants/theme';
 import { useStore } from '../../store';
 
@@ -70,7 +71,16 @@ export default function SearchScreen() {
 
   const trackSearchHits = (results: Screenshot[]) => {
     results.forEach(result => {
-      void recordSearchHit(result.id);
+      // Record search hit and update score (fire-and-forget)
+      void (async () => {
+        try {
+          await recordSearchHit(result.id);
+          // Update score in background, don't block search UI
+          void updateScreenshotScore(result.id);
+        } catch (error) {
+          console.warn('[Search] Failed to record hit/update score:', error);
+        }
+      })();
     });
   };
 
@@ -195,6 +205,7 @@ export default function SearchScreen() {
                   category={item.category}
                   tags={item.tags}
                   createdAt={item.created_at}
+                  importanceScore={item.importance_score}
                   onPress={() => router.push(`/detail/${item.id}`)}
                 />
               ))}
@@ -209,6 +220,7 @@ export default function SearchScreen() {
                   category={item.category}
                   tags={item.tags}
                   createdAt={item.created_at}
+                  importanceScore={item.importance_score}
                   onPress={() => router.push(`/detail/${item.id}`)}
                 />
               ))}
