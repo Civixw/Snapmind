@@ -2,14 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from 'expo-router';
 import GlassCard from '../../components/GlassCard';
 import { deleteScreenshot, getAllScreenshots } from '../../services/database';
-import { useStore, useScreenshotCount } from '../../store';
+import { getStorageInfo } from '../../services/storage';
+import { useStore } from '../../store';
 import { deleteImage } from '../../services/image';
 import { colors, borderRadius, shadows } from '../../constants/theme';
 
 export default function SettingsScreen() {
-  const screenshotCount = useScreenshotCount();
+  const [storageInfo, setStorageInfo] = useState<{
+    loading: boolean;
+    fileCount: number;
+    formatted: string;
+  }>({
+    loading: true,
+    fileCount: 0,
+    formatted: '...',
+  });
   const apiKey = useStore(state => state.apiKey);
   const setApiKey = useStore(state => state.setApiKey);
   const [showKey, setShowKey] = useState(false);
@@ -19,6 +29,22 @@ export default function SettingsScreen() {
   useEffect(() => {
     setInputValue(apiKey);
   }, [apiKey]);
+
+  const loadStorageInfo = async () => {
+    setStorageInfo({ loading: true, fileCount: 0, formatted: '...' });
+    const info = await getStorageInfo();
+    setStorageInfo({
+      loading: false,
+      fileCount: info.fileCount,
+      formatted: info.formatted,
+    });
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadStorageInfo();
+    }, [])
+  );
 
   const handleSaveKey = async () => {
     await setApiKey(inputValue.trim());
@@ -67,6 +93,8 @@ export default function SettingsScreen() {
 
               // Refresh store
               useStore.getState().loadInitialData();
+              // Refresh storage info
+              loadStorageInfo();
             } catch (e) {
               console.error('Clear data error:', e);
               Alert.alert('错误', '清空数据时发生错误');
@@ -90,18 +118,19 @@ export default function SettingsScreen() {
         <GlassCard style={styles.statsCard}>
           <View style={styles.glowOrb} />
           <View style={styles.statsRow}>
-            <View>
+            <View style={styles.statsContent}>
               <Text style={styles.statsLabel}>记忆存储</Text>
-              <Text style={styles.statsCount}>已保存 {screenshotCount} 张截图</Text>
+              <Text style={styles.statsCount}>
+                {storageInfo.loading
+                  ? '计算中...'
+                  : `已保存 ${storageInfo.fileCount} 张图片，约 ${storageInfo.formatted}`
+                }
+              </Text>
             </View>
             <LinearGradient colors={['#ff6b35', '#ab3500']} style={styles.statsIcon}>
               <Ionicons name="cloud-done" size={30} color="#fff" />
             </LinearGradient>
           </View>
-          <View style={styles.statsBarBg}>
-            <View style={[styles.statsBarFill, { width: '65%' }]} />
-          </View>
-          <Text style={styles.statsSubtext}>存储空间：已使用 65%</Text>
         </GlassCard>
       </View>
 
@@ -228,19 +257,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,107,53,0.1)',
   },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  statsContent: { flex: 1, marginRight: 12 },
   statsLabel: { fontSize: 14, fontWeight: '500', color: colors.onSurfaceVariant },
-  statsCount: { fontSize: 28, fontWeight: '700', color: colors.primary, marginTop: 4 },
+  statsCount: { fontSize: 22, fontWeight: '600', fontFamily: 'Poppins_600SemiBold', color: colors.primary, marginTop: 4 },
   statsIcon: {
     width: 56, height: 56, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center',
     ...shadows.fab,
   },
-  statsBarBg: {
-    width: '100%', height: 8, backgroundColor: colors.surfaceContainer,
-    borderRadius: 4, marginTop: 24, overflow: 'hidden',
-  },
-  statsBarFill: { height: '100%', backgroundColor: colors.primaryLight, borderRadius: 4 },
-  statsSubtext: { fontSize: 14, fontWeight: '500', color: 'rgba(89, 65, 57, 0.7)', marginTop: 8 },
   apiCard: { padding: 20 },
   generalCard: { paddingVertical: 8, paddingLeft: 24, paddingRight: 12 },
   apiHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },

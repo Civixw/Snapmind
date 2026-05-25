@@ -8,6 +8,9 @@ import {
   Quicksand_700Bold,
 } from '@expo-google-fonts/quicksand';
 import {
+  Poppins_600SemiBold,
+} from '@expo-google-fonts/poppins';
+import {
   DMSans_400Regular,
   DMSans_500Medium,
 } from '@expo-google-fonts/dm-sans';
@@ -21,6 +24,7 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Quicksand_600SemiBold,
     Quicksand_700Bold,
+    Poppins_600SemiBold,
     DMSans_400Regular,
     DMSans_500Medium,
   });

@@ -4,6 +4,8 @@
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",
+    "@expo-google-fonts/nunito": "^0.4.2",
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@expo-google-fonts/quicksand": "^0.4.1",
     "@expo/vector-icons": "~14.0.4",
     "expo": "~52.0.0",
