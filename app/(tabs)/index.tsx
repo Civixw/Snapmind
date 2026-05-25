@@ -120,6 +120,7 @@ export default function HomeScreen() {
                 category={item.category}
                 tags={item.tags}
                 createdAt={item.created_at}
+                importanceScore={item.importance_score}
                 onPress={() => router.push(`/detail/${item.id}`)}
               />
             ))}
@@ -134,6 +135,7 @@ export default function HomeScreen() {
                 category={item.category}
                 tags={item.tags}
                 createdAt={item.created_at}
+                importanceScore={item.importance_score}
                 onPress={() => router.push(`/detail/${item.id}`)}
               />
             ))}

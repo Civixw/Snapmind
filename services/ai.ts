@@ -51,6 +51,7 @@ interface AnalysisResult {
   category: string;
   tags: string[];
   city: string | null;
+  importance_score: number;
 }
 
 export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResult> {
@@ -89,12 +90,24 @@ export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResul
             {
               type: 'text',
               text: `分析这张截图，返回纯JSON（不要markdown代码块）：
+
+重要性评分说明：综合评估截图的实用价值，返回0-100之间的整数。
+评分参考标准（非硬性累加，请根据实际情况综合判断）：
+- 待办事项、日期时间类：高分段（70-100）
+- 订单/票据/备忘录类：中高分段（60-90）
+- 地址、电话、链接类：中分段（50-80）
+- 信息密度高（文字多、有结构）：中高分段（60-90）
+- 普通聊天/学习/购物：中分段（40-70）
+- 纯美食/风景图片：低分段（0-40）
+
+示例输出：
 {
   "raw_text": "识别图中所有文字内容",
   "summary": "1-2句中文摘要，概括这张截图的用途和关键信息",
   "category": "美食|购物|旅行|聊天|学习|健身|灵感|待办 中选一个",
   "tags": ["标签1", "标签2", "标签3"],
-  "city": "如果图中提到城市名则提取，否则null"
+  "city": "如果图中提到城市名则提取，否则null",
+  "importance_score": 65
 }`,
             },
           ],
@@ -120,7 +133,21 @@ export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResul
     .trim();
 
   try {
-    return JSON.parse(cleanJson);
+    const parsed = JSON.parse(cleanJson);
+
+    // 调试：查看AI返回的完整数据
+    console.log('[AI] 返回的importance_score:', parsed.importance_score, '类型:', typeof parsed.importance_score);
+    console.log('[AI] 完整数据:', parsed);
+
+    // Ensure importance_score exists and is within valid range (0-100)
+    if (typeof parsed.importance_score !== 'number') {
+      console.warn('[AI] importance_score不是数字，使用默认值50');
+      parsed.importance_score = 50;
+    } else {
+      // Clamp to valid range [0, 100]
+      parsed.importance_score = Math.max(0, Math.min(100, parsed.importance_score));
+    }
+    return parsed;
   } catch (e) {
     // If JSON parsing fails, return a safe fallback
     console.error('JSON解析失败:', cleanJson);
@@ -130,6 +157,7 @@ export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResul
       category: '待办',
       tags: [],
       city: null,
+      importance_score: 50,
     };
   }
 }

@@ -114,6 +114,8 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
           tags: JSON.stringify(analysis.tags),
           embedding: JSON.stringify(embedding),
           created_at: new Date().toISOString(),
+          importance_score: analysis.importance_score ?? 50,
+          score_updated_at: new Date().toISOString(),
         };
         await insertScreenshot(screenshotData);
 

@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform, Dimensions,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import GlassCard from '../../components/GlassCard';
 import TagChip from '../../components/TagChip';
 import { getScreenshotById, deleteScreenshot, updateScreenshot, Screenshot } from '../../services/database';
 import { deleteImage } from '../../services/image';
+import { recordView } from '../../services/interactions';
 import { colors, gradientColors, borderRadius, shadows } from '../../constants/theme';
 
 export default function DetailScreen() {
@@ -59,6 +60,16 @@ export default function DetailScreen() {
           const data = await getScreenshotById(id);
           if (data) {
             setScreenshot(data);
+            // 打印该截图的分数
+            const score = data.importance_score ?? 0;
+            const scoreBadge = score >= 80 ? '🔥' : score >= 60 ? '⭐' : '';
+            console.log('════════════════════════════════════════');
+            console.log(`📸 截图分数: ${score} 分 ${scoreBadge}`);
+            console.log(`📝 内容: ${data.summary?.substring(0, 30)}...`);
+            console.log(`📂 分类: ${data.category}`);
+            console.log(`🏷️  标签: ${data.tags}`);
+            console.log(`⏰ 导入时间: ${new Date(data.created_at).toLocaleString('zh-CN')}`);
+            console.log('════════════════════════════════════════');
           } else {
             console.error('未找到数据，id:', id);
             setError(true);
@@ -74,6 +85,16 @@ export default function DetailScreen() {
 
     loadData();
   }, [id]);
+
+  // Track view when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        // Fire-and-forget: record view analytics without awaiting
+        recordView(id);
+      }
+    }, [id, recordView])
+  );
 
   const handleDelete = () => {
     Alert.alert('删除截图', '确定要删除这张截图吗？', [

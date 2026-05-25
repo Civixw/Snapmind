@@ -17,6 +17,7 @@ import {
 import { colors } from '../constants/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useStore } from '../store';
+import { backfillImportanceScores } from '../services/scoring';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,9 +38,20 @@ export default function RootLayout() {
 
   // Initialize store on app mount
   useEffect(() => {
-    // Load screenshots from database
-    // apiKey and recentSearches auto-load from persist middleware
-    useStore.getState().loadInitialData();
+    const initializeApp = async () => {
+      try {
+        // One-time backfill for existing screenshots without importance scores
+        await backfillImportanceScores();
+      } catch (error) {
+        console.error('[Init] Failed to backfill scores:', error);
+      }
+
+      // Load screenshots from database
+      // apiKey and recentSearches auto-load from persist middleware
+      useStore.getState().loadInitialData();
+    };
+
+    initializeApp();
   }, []);
 
   if (!fontsLoaded) {

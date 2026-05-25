@@ -37,9 +37,10 @@ interface Props {
   tags: string;
   createdAt: string;
   onPress: () => void;
+  importanceScore?: number;
 }
 
-export default function ScreenshotCard({ id, imagePath, summary, category, tags: tagsJson, createdAt, onPress }: Props) {
+export default function ScreenshotCard({ id, imagePath, summary, category, tags: tagsJson, createdAt, onPress, importanceScore }: Props) {
   const aspectRatio = pickAspectRatio(id);
   const badge = badgeColor(category);
   const [imageError, setImageError] = useState(false);
@@ -47,6 +48,26 @@ export default function ScreenshotCard({ id, imagePath, summary, category, tags:
     try { return JSON.parse(tagsJson); } catch { return []; }
   })();
   const displayTags = tags.slice(0, 3);
+
+  const renderScoreBadge = () => {
+    if (importanceScore === undefined || importanceScore < 60) return null;
+
+    if (importanceScore >= 80) {
+      return (
+        <View style={styles.scoreBadgeGold}>
+          <Text style={styles.scoreEmoji}>🔥</Text>
+          <Text style={styles.scoreValue}>{importanceScore}</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.scoreBadgeOrange}>
+          <Text style={styles.scoreEmoji}>⭐</Text>
+          <Text style={styles.scoreValue}>{importanceScore}</Text>
+        </View>
+      );
+    }
+  };
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.wrapper}>
@@ -70,6 +91,7 @@ export default function ScreenshotCard({ id, imagePath, summary, category, tags:
             <View style={[styles.categoryBadge, { backgroundColor: badge.bg }]}>
               <Text style={[styles.categoryLabel, { color: badge.text }]}>{category}</Text>
             </View>
+            {renderScoreBadge()}
           </View>
           <View style={styles.contentArea}>
             <Text style={styles.summary} numberOfLines={2}>{summary}</Text>
@@ -174,5 +196,51 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 12,
     color: colors.onSurfaceVariant,
+  },
+  scoreBadgeGold: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.9)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  scoreBadgeOrange: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255, 107, 53, 0.9)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  scoreEmoji: {
+    fontSize: 12,
+  },
+  scoreValue: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

@@ -7,6 +7,7 @@ import SearchBar from '../../components/SearchBar';
 import ScreenshotCard from '../../components/ScreenshotCard';
 import { getAllScreenshots, searchByKeyword, Screenshot } from '../../services/database';
 import { getEmbedding, semanticSearch } from '../../services/ai';
+import { recordSearchHit } from '../../services/interactions';
 import { colors, borderRadius, gradientColors, shadows } from '../../constants/theme';
 import { useStore } from '../../store';
 
@@ -67,6 +68,12 @@ export default function SearchScreen() {
     getAllScreenshots().then(setAllScreenshots);
   }, []);
 
+  const trackSearchHits = (results: Screenshot[]) => {
+    results.forEach(result => {
+      void recordSearchHit(result.id);
+    });
+  };
+
   const handleSearch = async (searchQuery?: string) => {
     console.log('[Search] handleSearch called, searchQuery:', searchQuery, 'query state:', query);
     const trimmed = (searchQuery ?? query).trim();
@@ -104,6 +111,7 @@ export default function SearchScreen() {
               }
             }
             setResults(merged);
+            trackSearchHits(merged);
             return;
           }
         } catch (e) {
@@ -113,6 +121,7 @@ export default function SearchScreen() {
 
       // Use keyword results as fallback
       setResults(keywordResults);
+      trackSearchHits(keywordResults);
     } catch (e) {
       console.error('Search error:', e);
       setResults([]);
