@@ -9,6 +9,7 @@ import { analyzeScreenshot, getEmbedding } from '../services/ai';
 import { insertScreenshot } from '../services/database';
 import { colors, borderRadius, shadows } from '../constants/theme';
 import { useStore } from '../store';
+import { useTheme } from '../hooks/useTheme';
 
 type Step = 'select' | 'preview' | 'progress';
 
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function ImportModal({ visible, onClose, onImportComplete }: Props) {
+  const { colors } = useTheme();
   const [step, setStep] = useState<Step>('select');
   const [selectedUris, setSelectedUris] = useState<string[]>([]);
   const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
@@ -149,12 +151,12 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onDismiss={handleClose}>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.handle} />
 
         <View style={styles.header}>
-          <Text style={styles.title}>导入截图</Text>
-          <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+          <Text style={[styles.title, { color: colors.onSurface }]}>导入截图</Text>
+          <TouchableOpacity onPress={handleClose} style={[styles.closeBtn, { backgroundColor: colors.surfaceContainerHigh }]}>
             <Ionicons name="close" size={20} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
@@ -163,12 +165,12 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
           <View style={styles.stepContainer}>
             <View style={styles.glowWrapper}>
               <TouchableOpacity onPress={handlePickImages} activeOpacity={0.8}>
-                <View style={styles.pickBtn}>
-                  <View style={styles.pickIcon}>
+                <View style={[styles.pickBtn, { backgroundColor: colors.surfaceContainerLow, borderColor: `${colors.primary}40` }]}>
+                  <View style={[styles.pickIcon, { backgroundColor: `${colors.primary}15` }]}>
                     <Ionicons name="add" size={40} color={colors.primary} />
                   </View>
-                  <Text style={styles.pickTitle}>从相册选择</Text>
-                  <Text style={styles.pickSubtitle}>支持 JPG, PNG, HEIC 格式</Text>
+                  <Text style={[styles.pickTitle, { color: colors.primary }]}>从相册选择</Text>
+                  <Text style={[styles.pickSubtitle, { color: colors.onSurfaceVariant }]}>支持 JPG, PNG, HEIC 格式</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -178,24 +180,24 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
         {step === 'preview' && (
           <View style={styles.stepContainer}>
             <View style={styles.previewHeader}>
-              <Text style={styles.previewCount}>已选择 ({selectedUris.length})</Text>
+              <Text style={[styles.previewCount, { color: colors.onSurface }]}>已选择 ({selectedUris.length})</Text>
               <TouchableOpacity onPress={() => { setStep('select'); setSelectedUris([]); }}>
-                <Text style={styles.reselectText}>重新选择</Text>
+                <Text style={[styles.reselectText, { color: colors.primary }]}>重新选择</Text>
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.previewGrid}>
               {selectedUris.map((uri, i) => (
                 <View key={i} style={styles.previewItem}>
                   <Image source={{ uri }} style={styles.previewImage} />
-                  <View style={styles.checkBadge}>
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                  <View style={[styles.checkBadge, { backgroundColor: colors.primary }]}>
+                    <Ionicons name="checkmark" size={14} color={colors.onPrimary} />
                   </View>
                 </View>
               ))}
             </ScrollView>
             <TouchableOpacity onPress={startAnalysis} style={styles.analyzeBtn}>
-              <LinearGradient colors={['#ff6b35', '#ab3500']} style={styles.analyzeBtnGradient}>
-                <Text style={styles.analyzeBtnText}>开始分析 ({selectedUris.length})</Text>
+              <LinearGradient colors={colors.gradientColors} style={styles.analyzeBtnGradient}>
+                <Text style={[styles.analyzeBtnText, { color: colors.onPrimary }]}>开始分析 ({selectedUris.length})</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -203,24 +205,25 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
 
         {step === 'progress' && (
           <View style={styles.stepContainer}>
-            <Text style={styles.progressTitle}>正在深度理解...</Text>
+            <Text style={[styles.progressTitle, { color: colors.onSurface }]}>正在深度理解...</Text>
             <ScrollView style={styles.progressList}>
               {progressItems.map((item, i) => (
-                <View key={i} style={styles.progressCard}>
+                <View key={i} style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.surfaceContainerHigh }]}>
                   <Image source={{ uri: item.uri }} style={styles.progressThumb} />
                   <View style={styles.progressInfo}>
                     <View style={styles.progressRow}>
-                      <Text style={styles.progressFilename}>{item.filename}</Text>
+                      <Text style={[styles.progressFilename, { color: colors.onSurface }]}>{item.filename}</Text>
                       <Text
                         style={[
                           styles.progressStatus,
+                          { color: item.status === 'error' ? colors.error : colors.primary },
                           item.status === 'error' && styles.progressStatusError,
                         ]}
                       >
                         {item.status === 'done' ? '完成 ✓' : item.status === 'error' ? '失败 ✗' : item.label}
                       </Text>
                     </View>
-                    <View style={styles.progressBar}>
+                    <View style={[styles.progressBar, { backgroundColor: colors.surfaceContainer }]}>
                       <View
                         style={[
                           styles.progressFill,
@@ -247,8 +250,8 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
             </ScrollView>
             {progressItems.every((item) => item.status === 'done' || item.status === 'error') && (
               <TouchableOpacity onPress={finish} style={styles.doneBtn}>
-                <LinearGradient colors={['#ff6b35', '#ab3500']} style={styles.analyzeBtnGradient}>
-                  <Text style={styles.analyzeBtnText}>完成，返回首页</Text>
+                <LinearGradient colors={colors.gradientColors} style={styles.analyzeBtnGradient}>
+                  <Text style={[styles.analyzeBtnText, { color: colors.onPrimary }]}>完成，返回首页</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -262,7 +265,6 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
   },
@@ -281,12 +283,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  title: { fontSize: 24, fontWeight: '700', color: colors.onSurface },
+  title: { fontSize: 24, fontWeight: '700' },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.surfaceContainerHigh,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -298,23 +299,20 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 9,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(171, 53, 0, 0.3)',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   pickIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(171, 53, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pickTitle: { fontSize: 20, fontWeight: '600', color: colors.primary },
-  pickSubtitle: { fontSize: 14, fontWeight: '500', color: colors.onSurfaceVariant },
+  pickTitle: { fontSize: 20, fontWeight: '600' },
+  pickSubtitle: { fontSize: 14, fontWeight: '500' },
   previewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -323,7 +321,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   previewCount: { fontSize: 20, fontWeight: '600' },
-  reselectText: { color: colors.primary, fontSize: 14, fontWeight: '500' },
+  reselectText: { fontSize: 14, fontWeight: '500' },
   previewGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -344,7 +342,6 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -355,11 +352,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...shadows.fab,
   },
-  analyzeBtnText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  analyzeBtnText: { fontSize: 18, fontWeight: '600' },
   progressTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.onSurface,
     marginTop: 24,
     marginBottom: 16,
   },
@@ -368,13 +364,11 @@ const styles = StyleSheet.create({
   },
   progressCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.6)',
     borderRadius: borderRadius['2xl'],
     padding: 16,
     marginBottom: 16,
     gap: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
   progressThumb: {
     width: 48,
@@ -384,14 +378,13 @@ const styles = StyleSheet.create({
   },
   progressInfo: { flex: 1, gap: 8 },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressFilename: { fontSize: 14, fontWeight: '500', color: colors.onSurface },
-  progressStatus: { fontSize: 14, fontWeight: '500', color: colors.primary },
-  progressStatusDone: { color: colors.secondary },
-  progressStatusError: { color: colors.error },
+  progressFilename: { fontSize: 14, fontWeight: '500' },
+  progressStatus: { fontSize: 14, fontWeight: '500' },
+  progressStatusDone: {},
+  progressStatusError: {},
   progressBar: {
     width: '100%',
     height: 6,
-    backgroundColor: colors.surfaceContainer,
     borderRadius: 3,
     overflow: 'hidden',
   },

@@ -6,6 +6,7 @@ import ScreenshotCard from '../../components/ScreenshotCard';
 import { getTopScreenshots, recalculateAllScores } from '../../services/scoring';
 import { colors, borderRadius } from '../../constants/theme';
 import type { Screenshot } from '../../services/database';
+import { useTheme } from '../../hooks/useTheme';
 
 type TimeWindow = 'week' | 'month';
 
@@ -33,6 +34,7 @@ function VaultScreenshotCard({ item, onPress }: VaultScreenshotCardProps) {
 
 export default function VaultScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('week');
   const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,30 +85,30 @@ export default function VaultScreen() {
   }, [screenshots]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitleWrapper}>
-          <Text style={styles.headerTitle}>智能精选</Text>
-          <Text style={styles.headerSubtitle}>AI 为你挑选的高光时刻</Text>
+          <Text style={[styles.headerTitle, { color: colors.primary }]}>智能精选</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.onSurfaceVariant }]}>AI 为你挑选的高光时刻</Text>
         </View>
       </View>
 
       {/* Segmented Control */}
-      <View style={styles.segmentedControl}>
+      <View style={[styles.segmentedControl, { backgroundColor: colors.surfaceContainerLow }]}>
         <TouchableOpacity
-          style={[styles.segment, timeWindow === 'week' && styles.segmentActive]}
+          style={[styles.segment, timeWindow === 'week' && { backgroundColor: colors.primary }]}
           onPress={() => setTimeWindow('week')}
         >
-          <Text style={[styles.segmentText, timeWindow === 'week' && styles.segmentTextActive]}>
+          <Text style={[styles.segmentText, { color: timeWindow === 'week' ? '#fff' : colors.onSurfaceVariant }, timeWindow === 'week' && styles.segmentTextActive]}>
             本周
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.segment, timeWindow === 'month' && styles.segmentActive]}
+          style={[styles.segment, timeWindow === 'month' && { backgroundColor: colors.primary }]}
           onPress={() => setTimeWindow('month')}
         >
-          <Text style={[styles.segmentText, timeWindow === 'month' && styles.segmentTextActive]}>
+          <Text style={[styles.segmentText, { color: timeWindow === 'month' ? '#fff' : colors.onSurfaceVariant }, timeWindow === 'month' && styles.segmentTextActive]}>
             本月
           </Text>
         </TouchableOpacity>
@@ -116,13 +118,13 @@ export default function VaultScreen() {
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>AI 正在整理...</Text>
+          <Text style={[styles.loadingText, { color: colors.onSurfaceVariant }]}>AI 正在整理...</Text>
         </View>
       ) : screenshots.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="sparkles-outline" size={64} color={colors.outlineVariant} />
-          <Text style={styles.emptyTitle}>暂无精选内容</Text>
-          <Text style={styles.emptySubtitle}>导入截图后，AI 会帮你找出重要内容</Text>
+          <Text style={[styles.emptyTitle, { color: colors.onSurfaceVariant }]}>暂无精选内容</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.outline }]}>导入截图后，AI 会帮你找出重要内容</Text>
         </View>
       ) : (
         <ScrollView
@@ -157,7 +159,6 @@ export default function VaultScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -168,18 +169,15 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.primary,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.onSurfaceVariant,
     marginTop: 4,
   },
   segmentedControl: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: borderRadius.full,
     padding: 4,
   },
@@ -189,13 +187,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: borderRadius.full,
   },
-  segmentActive: {
-    backgroundColor: colors.primary,
-  },
+  segmentActive: {},
   segmentText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.onSurfaceVariant,
   },
   segmentTextActive: {
     color: '#fff',
@@ -208,7 +203,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: colors.onSurfaceVariant,
   },
   emptyContainer: {
     flex: 1,
@@ -220,11 +214,9 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.onSurfaceVariant,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: colors.outline,
     textAlign: 'center',
   },
   scrollView: {

@@ -2,15 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import GlassCard from '../../components/GlassCard';
 import { deleteScreenshot, getAllScreenshots } from '../../services/database';
 import { getStorageInfo } from '../../services/storage';
 import { useStore } from '../../store';
 import { deleteImage } from '../../services/image';
 import { colors, borderRadius, shadows } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function SettingsScreen() {
+  const router = useRouter();
+  const { colors } = useTheme();
   const [storageInfo, setStorageInfo] = useState<{
     loading: boolean;
     fileCount: number;
@@ -106,10 +109,10 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.headerTitleWrapper}>
-          <Text style={styles.headerTitle}>设置</Text>
+          <Text style={[styles.headerTitle, { color: colors.primary }]}>设置</Text>
         </View>
       </View>
 
@@ -119,8 +122,8 @@ export default function SettingsScreen() {
           <View style={styles.glowOrb} />
           <View style={styles.statsRow}>
             <View style={styles.statsContent}>
-              <Text style={styles.statsLabel}>记忆存储</Text>
-              <Text style={styles.statsCount}>
+              <Text style={[styles.statsLabel, { color: colors.onSurfaceVariant }]}>记忆存储</Text>
+              <Text style={[styles.statsCount, { color: colors.primary }]}>
                 {storageInfo.loading
                   ? '计算中...'
                   : `已保存 ${storageInfo.fileCount} 张图片，约 ${storageInfo.formatted}`
@@ -136,18 +139,19 @@ export default function SettingsScreen() {
 
       {/* API Key */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>智能引擎</Text>
+        <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>智能引擎</Text>
         <GlassCard style={styles.apiCard}>
           <View style={styles.apiHeader}>
             <Ionicons name="key" size={20} color={colors.primary} />
-            <Text style={styles.apiTitle}>API Key 配置</Text>
+            <Text style={[styles.apiTitle, { color: colors.onSurface }]}>API Key 配置</Text>
           </View>
-          <View style={styles.apiInputRow}>
+          <View style={[styles.apiInputRow, { backgroundColor: colors.surfaceVariant, borderColor: colors.surfaceContainerHigh }]}>
             <TextInput
-              style={styles.apiInput}
+              style={[styles.apiInput, { color: colors.onSurface }]}
               value={inputValue}
               onChangeText={setInputValue}
               placeholder="输入您的 API 密钥"
+              placeholderTextColor={colors.onSurfaceVariant}
               secureTextEntry={!showKey}
               autoCapitalize="none"
             />
@@ -159,42 +163,60 @@ export default function SettingsScreen() {
               />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleSaveKey} style={styles.saveKeyBtn}>
+          <TouchableOpacity onPress={handleSaveKey} style={[styles.saveKeyBtn, { backgroundColor: colors.primary }]}>
             <Text style={styles.saveKeyBtnText}>保存</Text>
           </TouchableOpacity>
-          <Text style={styles.apiHint}>用于启用高级 AI 分析和自动标签功能。</Text>
+          <Text style={[styles.apiHint, { color: colors.onSurfaceVariant }]}>用于启用高级 AI 分析和自动标签功能。</Text>
         </GlassCard>
       </View>
 
       {/* General */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>通用</Text>
+        <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>通用</Text>
         <GlassCard style={styles.generalCard}>
-          <SettingRow icon="notifications-outline" label="通知设置" />
-          <View style={styles.divider} />
-          <SettingRow icon="color-palette-outline" label="外观与主题" />
-          <View style={styles.divider} />
-          <SettingRow icon="shield-outline" label="隐私与安全" />
+          <TouchableOpacity style={settingStyles.row}>
+            <View style={settingStyles.rowLeft}>
+              <Ionicons name="notifications-outline" size={20} color={colors.onSurfaceVariant} />
+              <Text style={[settingStyles.rowLabel, { color: colors.onSurface }]}>通知设置</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+          <TouchableOpacity style={settingStyles.row} onPress={() => router.push('/settings/appearance')}>
+            <View style={settingStyles.rowLeft}>
+              <Ionicons name="color-palette-outline" size={20} color={colors.onSurfaceVariant} />
+              <Text style={[settingStyles.rowLabel, { color: colors.onSurface }]}>外观与主题</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+          <TouchableOpacity style={settingStyles.row} onPress={() => router.push('/settings/privacy')}>
+            <View style={settingStyles.rowLeft}>
+              <Ionicons name="shield-outline" size={20} color={colors.onSurfaceVariant} />
+              <Text style={[settingStyles.rowLabel, { color: colors.onSurface }]}>隐私与安全</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
         </GlassCard>
       </View>
 
       {/* About */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>关于</Text>
+        <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>关于</Text>
         <GlassCard style={styles.aboutCard}>
           <LinearGradient colors={['#ff6b35', '#ab3500']} style={styles.aboutIcon}>
             <Ionicons name="sparkles" size={36} color="#fff" />
           </LinearGradient>
-          <Text style={styles.aboutName}>SnapMind</Text>
-          <Text style={styles.aboutVersion}>Version 1.0.0 (Build 1)</Text>
+          <Text style={[styles.aboutName, { color: colors.primary }]}>SnapMind</Text>
+          <Text style={[styles.aboutVersion, { color: colors.onSurfaceVariant }]}>Version 1.0.0 (Build 1)</Text>
           <View style={styles.aboutLinks}>
-            <TouchableOpacity style={styles.aboutLink}>
+            <TouchableOpacity style={[styles.aboutLink, { borderColor: colors.primary }]}>
               <Ionicons name="document-text-outline" size={14} color={colors.primary} />
-              <Text style={styles.aboutLinkText}>服务条款</Text>
+              <Text style={[styles.aboutLinkText, { color: colors.primary }]}>服务条款</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.aboutLink}>
+            <TouchableOpacity style={[styles.aboutLink, { borderColor: colors.primary }]}>
               <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
-              <Text style={styles.aboutLinkText}>隐私政策</Text>
+              <Text style={[styles.aboutLinkText, { color: colors.primary }]}>隐私政策</Text>
             </TouchableOpacity>
           </View>
         </GlassCard>
@@ -202,9 +224,9 @@ export default function SettingsScreen() {
 
       {/* Danger Zone */}
       <View style={styles.section}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleClearAllData}>
+        <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.surfaceContainerHigh }]} onPress={handleClearAllData}>
           <Ionicons name="trash-outline" size={20} color={colors.error} />
-          <Text style={styles.logoutText}>清空所有数据</Text>
+          <Text style={[styles.logoutText, { color: colors.error }]}>清空所有数据</Text>
         </TouchableOpacity>
       </View>
 
@@ -213,37 +235,14 @@ export default function SettingsScreen() {
   );
 }
 
-function SettingRow({ icon, label }: { icon: string; label: string }) {
-  return (
-    <TouchableOpacity style={settingStyles.row}>
-      <View style={settingStyles.rowLeft}>
-        <Ionicons name={icon as any} size={20} color={colors.onSurfaceVariant} />
-        <Text style={settingStyles.rowLabel}>{label}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={18} color="rgba(89, 65, 57, 0.3)" />
-    </TouchableOpacity>
-  );
-}
-
-const settingStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  rowLabel: { fontSize: 16, color: colors.onSurface },
-});
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 },
   headerTitleWrapper: {},
-  headerTitle: { fontSize: 24, fontWeight: '700', fontFamily: 'Quicksand_700Bold', color: colors.primary },
+  headerTitle: { fontSize: 24, fontWeight: '700', fontFamily: 'Quicksand_700Bold' },
   section: { paddingHorizontal: 20, marginBottom: 24 },
   sectionTitle: {
-    fontSize: 20, fontWeight: '600', color: colors.onSurfaceVariant,
+    fontSize: 20, fontWeight: '600',
     marginBottom: 12, paddingLeft: 4,
   },
   statsCard: { padding: 24, overflow: 'hidden' },
@@ -258,8 +257,8 @@ const styles = StyleSheet.create({
   },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   statsContent: { flex: 1, marginRight: 12 },
-  statsLabel: { fontSize: 14, fontWeight: '500', color: colors.onSurfaceVariant },
-  statsCount: { fontSize: 22, fontWeight: '600', fontFamily: 'Poppins_600SemiBold', color: colors.primary, marginTop: 4 },
+  statsLabel: { fontSize: 14, fontWeight: '500' },
+  statsCount: { fontSize: 22, fontWeight: '600', fontFamily: 'Poppins_600SemiBold', marginTop: 4 },
   statsIcon: {
     width: 56, height: 56, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center',
@@ -268,39 +267,40 @@ const styles = StyleSheet.create({
   apiCard: { padding: 20 },
   generalCard: { paddingVertical: 8, paddingLeft: 24, paddingRight: 12 },
   apiHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  apiTitle: { fontSize: 16, fontWeight: '700', color: colors.onSurface },
+  apiTitle: { fontSize: 16, fontWeight: '700' },
   apiInputRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F5E6D3', borderRadius: 20,
+    borderRadius: 20,
     paddingHorizontal: 20, height: 48,
+    borderWidth: 1,
   },
-  apiInput: { flex: 1, fontSize: 14, color: colors.onSurface },
+  apiInput: { flex: 1, fontSize: 14 },
   saveKeyBtn: {
     alignSelf: 'flex-end', marginTop: 12,
     paddingHorizontal: 20, paddingVertical: 8,
-    borderRadius: borderRadius.full, backgroundColor: colors.primary,
+    borderRadius: borderRadius.full,
   },
   saveKeyBtnText: { color: '#fff', fontSize: 14, fontWeight: '500' },
-  apiHint: { fontSize: 14, color: colors.onSurfaceVariant, marginTop: 8, lineHeight: 20 },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
+  apiHint: { fontSize: 14, marginTop: 8, lineHeight: 20 },
+  divider: { height: 1 },
   aboutCard: { padding: 24, alignItems: 'center' },
   aboutIcon: {
     width: 64, height: 64, borderRadius: 16,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16, ...shadows.fab,
   },
-  aboutName: { fontSize: 24, fontWeight: '700', color: colors.primary },
+  aboutName: { fontSize: 24, fontWeight: '700' },
   aboutVersion: {
-    fontSize: 14, fontWeight: '500', color: colors.onSurfaceVariant,
+    fontSize: 14, fontWeight: '500',
     marginTop: 4, marginBottom: 24,
   },
   aboutLinks: { flexDirection: 'row', gap: 12 },
   aboutLink: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 16, paddingVertical: 10,
-    borderRadius: borderRadius.full, borderWidth: 1, borderColor: colors.primary,
+    borderRadius: borderRadius.full, borderWidth: 1,
   },
-  aboutLinkText: { fontSize: 14, fontWeight: '500', color: colors.primary },
+  aboutLinkText: { fontSize: 14, fontWeight: '500' },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,9 +308,18 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 56,
     borderRadius: borderRadius['2xl'],
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  logoutText: { fontSize: 16, fontWeight: '500', color: colors.error },
+  logoutText: { fontSize: 16, fontWeight: '500' },
+});
+
+const settingStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  rowLabel: { fontSize: 16 },
 });

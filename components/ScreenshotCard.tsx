@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, borderRadius, shadows } from '../constants/theme';
@@ -38,9 +38,10 @@ interface Props {
   createdAt: string;
   onPress: () => void;
   importanceScore?: number;
+  sensitiveFlags?: string;
 }
 
-export default function ScreenshotCard({ id, imagePath, summary, category, tags: tagsJson, createdAt, onPress, importanceScore }: Props) {
+export default function ScreenshotCard({ id, imagePath, summary, category, tags: tagsJson, createdAt, onPress, importanceScore, sensitiveFlags }: Props) {
   const aspectRatio = pickAspectRatio(id);
   const badge = badgeColor(category);
   const [imageError, setImageError] = useState(false);
@@ -48,6 +49,17 @@ export default function ScreenshotCard({ id, imagePath, summary, category, tags:
     try { return JSON.parse(tagsJson); } catch { return []; }
   })();
   const displayTags = tags.slice(0, 3);
+
+  const sensitiveFlagsList = useMemo(() => {
+    if (!sensitiveFlags) return [];
+    try {
+      return JSON.parse(sensitiveFlags) as string[];
+    } catch {
+      return [];
+    }
+  }, [sensitiveFlags]);
+
+  const hasSensitiveContent = sensitiveFlagsList.length > 0;
 
   const renderScoreBadge = () => {
     if (importanceScore === undefined || importanceScore < 60) return null;
@@ -92,6 +104,12 @@ export default function ScreenshotCard({ id, imagePath, summary, category, tags:
               <Text style={[styles.categoryLabel, { color: badge.text }]}>{category}</Text>
             </View>
             {renderScoreBadge()}
+            {hasSensitiveContent && (
+              <View style={styles.sensitiveBadge}>
+                <Ionicons name="lock-closed" size={12} color={colors.error} />
+                <Text style={styles.sensitiveText}>敏感</Text>
+              </View>
+            )}
           </View>
           <View style={styles.contentArea}>
             <Text style={styles.summary} numberOfLines={2}>{summary}</Text>
@@ -242,5 +260,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  sensitiveBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 180, 171, 0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  sensitiveText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

@@ -18,6 +18,7 @@ import { colors } from '../constants/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useStore } from '../store';
 import { backfillImportanceScores, recalculateAllScores } from '../services/scoring';
+import { ThemeProvider } from '../contexts/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -87,10 +88,12 @@ export default function RootLayout() {
         }} />
       )}
       <ErrorBoundary>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="detail/[id]" options={{ headerShown: false }} />
-        </Stack>
+        <ThemeProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="detail/[id]" options={{ headerShown: false }} />
+          </Stack>
+        </ThemeProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

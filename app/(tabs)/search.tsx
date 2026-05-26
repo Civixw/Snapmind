@@ -11,6 +11,7 @@ import { recordSearchHit } from '../../services/interactions';
 import { updateScreenshotScore } from '../../services/scoring';
 import { colors, borderRadius, gradientColors, shadows } from '../../constants/theme';
 import { useStore } from '../../store';
+import { useTheme } from '../../hooks/useTheme';
 
 const RECOMMEND_ITEMS = [
   {
@@ -40,14 +41,15 @@ const RECOMMEND_ITEMS = [
 ];
 
 const HOT_TAG_STYLES = [
-  { bg: 'rgba(137,248,122,0.2)', border: 'rgba(137,248,122,0.3)', text: colors.secondary },
-  { bg: 'rgba(171,53,0,0.1)', border: 'rgba(171,53,0,0.2)', text: colors.primary },
-  { bg: 'rgba(81,163,201,0.1)', border: 'rgba(81,163,201,0.25)', text: colors.tertiary },
-  { bg: 'rgba(255,228,195,0.6)', border: 'rgba(255,255,255,0.5)', text: colors.onSurfaceVariant },
+  { bgLight: 'rgba(0,110,12,0.15)', bgDark: 'rgba(137,248,122,0.15)', borderLight: 'rgba(0,110,12,0.25)', borderDark: 'rgba(137,248,122,0.25)', textLight: '#006e0c', textDark: 'secondary' as const },
+  { bgLight: 'rgba(171,53,0,0.1)', bgDark: 'rgba(255,107,53,0.15)', borderLight: 'rgba(171,53,0,0.2)', borderDark: 'rgba(255,107,53,0.3)', text: 'primary' as const },
+  { bgLight: 'rgba(81,163,201,0.1)', bgDark: 'rgba(81,163,201,0.15)', borderLight: 'rgba(81,163,201,0.25)', borderDark: 'rgba(81,163,201,0.3)', text: 'tertiary' as const },
+  { bgLight: 'rgba(255,228,195,0.6)', bgDark: 'rgba(255,107,53,0.15)', borderLight: 'rgba(255,255,255,0.5)', borderDark: 'rgba(255,107,53,0.3)', text: 'onSurfaceVariant' as const },
 ];
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Screenshot[]>([]);
   const [searching, setSearching] = useState(false);
@@ -150,10 +152,10 @@ export default function SearchScreen() {
   }, [results]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surfaceContainerHigh }]}>
           <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <View style={styles.searchInputWrapper}>
@@ -178,20 +180,20 @@ export default function SearchScreen() {
       {searching ? (
         <View style={styles.searchingContainer}>
           <View style={styles.spinnerRing}>
-            <View style={styles.spinnerTrack} />
-            <View style={styles.spinnerFill} />
+            <View style={[styles.spinnerTrack, { borderColor: 'rgba(171,53,0,0.15)' }]} />
+            <View style={[styles.spinnerFill, { borderColor: colors.primary, borderTopColor: 'transparent' }]} />
           </View>
-          <Text style={styles.searchingText}>正在帮你找...</Text>
+          <Text style={[styles.searchingText, { color: colors.primary }]}>正在帮你找...</Text>
         </View>
       ) : hasSearched ? (
         results.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={48} color={colors.outlineVariant} />
-            <Text style={styles.emptyText}>没有找到相关截图</Text>
+            <Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>没有找到相关截图</Text>
           </View>
         ) : (
           <ScrollView
-            style={styles.scrollView}
+            style={[styles.scrollView, { backgroundColor: colors.background }]}
             contentContainerStyle={styles.grid}
             showsVerticalScrollIndicator={false}
           >
@@ -229,23 +231,23 @@ export default function SearchScreen() {
         )
       ) : (
         /* Default state: suggestions */
-        <ScrollView style={styles.suggestions} showsVerticalScrollIndicator={false}>
+        <ScrollView style={[styles.suggestions, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
           {recentSearches.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>最近搜索</Text>
+                <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>最近搜索</Text>
                 <TouchableOpacity onPress={() => clearRecentSearches()}>
-                  <Text style={styles.clearAllText}>全部清除</Text>
+                  <Text style={[styles.clearAllText, { color: colors.primary }]}>全部清除</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.chipRow}>
                 {recentSearches.map((s, i) => (
                   <TouchableOpacity
                     key={i}
-                    style={styles.historyChip}
+                    style={[styles.historyChip, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.surfaceContainerHigh }]}
                     onPress={() => { setQuery(s); handleSearch(s); }}
                   >
-                    <Text style={styles.historyChipText}>{s}</Text>
+                    <Text style={[styles.historyChipText, { color: colors.onSurfaceVariant }]}>{s}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -254,7 +256,7 @@ export default function SearchScreen() {
 
           {/* Recommended Categories */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>推荐分类</Text>
+            <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>推荐分类</Text>
             <View style={styles.bentoGrid}>
               {RECOMMEND_ITEMS.map((rec) => (
                 <TouchableOpacity
@@ -292,17 +294,27 @@ export default function SearchScreen() {
             if (allTags.length === 0) return null;
             return (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>热门标签</Text>
+                <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>热门标签</Text>
                 <View style={styles.tagCloud}>
                   {allTags.slice(0, 12).map((tag, i) => {
                     const ts = HOT_TAG_STYLES[i % HOT_TAG_STYLES.length];
+                    const isDark = colors.background === '#1A1A1A';
+                    const bgColor = isDark ? ts.bgDark : ts.bgLight;
+                    const borderColor = isDark ? ts.borderDark : ts.borderLight;
+                    const textColor = ts.text === 'primary' ? colors.primary :
+                                     ts.text === 'secondary' ? colors.secondary :
+                                     ts.text === 'tertiary' ? colors.tertiary :
+                                     ts.text === 'onSurfaceVariant' ? colors.onSurfaceVariant :
+                                     ts.text;
+                    // Handle first tag's special light/dark text colors
+                    const finalTextColor = 'textLight' in ts ? (isDark ? colors.secondary : ts.textLight) : textColor;
                     return (
                       <TouchableOpacity
                         key={tag}
-                        style={[styles.hotTag, { backgroundColor: ts.bg, borderColor: ts.border }]}
+                        style={[styles.hotTag, { backgroundColor: bgColor, borderColor }]}
                         onPress={() => { setQuery(tag); handleSearch(tag); }}
                       >
-                        <Text style={[styles.hotTagText, { color: ts.text }]}>{tag}</Text>
+                        <Text style={[styles.hotTagText, { color: finalTextColor }]}>{tag}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -317,7 +329,7 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -325,13 +337,11 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 12,
     gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.8)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -347,15 +357,15 @@ const styles = StyleSheet.create({
   spinnerRing: { width: 64, height: 64, justifyContent: 'center', alignItems: 'center' },
   spinnerTrack: {
     position: 'absolute', width: 64, height: 64, borderRadius: 32,
-    borderWidth: 4, borderColor: 'rgba(171,53,0,0.15)',
+    borderWidth: 4,
   },
   spinnerFill: {
     position: 'absolute', width: 64, height: 64, borderRadius: 32,
-    borderWidth: 4, borderColor: colors.primary, borderTopColor: 'transparent',
+    borderWidth: 4, borderTopColor: 'transparent',
   },
-  searchingText: { fontSize: 20, fontWeight: '600', color: colors.primary },
+  searchingText: { fontSize: 20, fontWeight: '600' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  emptyText: { fontSize: 16, color: colors.onSurfaceVariant },
+  emptyText: { fontSize: 16 },
   suggestions: { paddingHorizontal: 20, paddingTop: 24 },
   section: { marginBottom: 28 },
   sectionHeader: {
@@ -364,18 +374,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 20, fontWeight: '600', color: colors.onSurfaceVariant, marginBottom: 12 },
-  clearAllText: { fontSize: 14, fontWeight: '500', color: colors.primary },
+  sectionTitle: { fontSize: 20, fontWeight: '600', marginBottom: 12 },
+  clearAllText: { fontSize: 14, fontWeight: '500' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   historyChip: {
-    backgroundColor: colors.surfaceContainerLow,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
   },
-  historyChipText: { fontSize: 14, fontWeight: '500', color: colors.onSurfaceVariant },
+  historyChipText: { fontSize: 14, fontWeight: '500' },
 
   // Bento grid for recommended categories
   bentoGrid: {

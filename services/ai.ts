@@ -45,13 +45,22 @@ export async function saveApiKey(key: string): Promise<void> {
   }
 }
 
-interface AnalysisResult {
+export type SensitiveFlag =
+  | 'id_card'
+  | 'bank_card'
+  | 'phone'
+  | 'chat_record'
+  | 'password'
+  | 'private_photo';
+
+export interface AnalysisResult {
   raw_text: string;
   summary: string;
   category: string;
   tags: string[];
   city: string | null;
   importance_score: number;
+  sensitive_flags: SensitiveFlag[];
 }
 
 export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResult> {
@@ -100,6 +109,14 @@ export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResul
 - 普通聊天/学习/购物：中分段（40-70）
 - 纯美食/风景图片：低分段（0-40）
 
+敏感信息检测：检查图中是否包含以下类型的敏感信息，返回检测到的类型数组：
+- id_card: 身份证、护照、驾驶证等证件号码
+- bank_card: 银行卡号、信用卡号
+- phone: 电话号码
+- chat_record: 聊天记录、对话内容
+- password: 密码、验证码、PIN码
+- private_photo: 私密照片、不雅内容
+
 示例输出：
 {
   "raw_text": "识别图中所有文字内容",
@@ -107,8 +124,11 @@ export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResul
   "category": "美食|购物|旅行|聊天|学习|健身|灵感|待办 中选一个",
   "tags": ["标签1", "标签2", "标签3"],
   "city": "如果图中提到城市名则提取，否则null",
-  "importance_score": 65
-}`,
+  "importance_score": 65,
+  "sensitive_flags": ["phone", "chat_record"]
+}
+
+如果没有检测到敏感信息，sensitive_flags 返回空数组 []`,
             },
           ],
         },
@@ -158,6 +178,7 @@ export async function analyzeScreenshot(imageUri: string): Promise<AnalysisResul
       tags: [],
       city: null,
       importance_score: 50,
+      sensitive_flags: [],
     };
   }
 }

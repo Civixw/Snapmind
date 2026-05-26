@@ -83,10 +83,8 @@ export async function calculateImportanceScore(
  */
 export async function updateScreenshotScore(screenshotId: string): Promise<void> {
   try {
-    // Get screenshot data
     const screenshot = await getScreenshotById(screenshotId);
     if (!screenshot) {
-      console.warn('[Scoring] Screenshot not found:', screenshotId);
       return;
     }
 
@@ -104,22 +102,7 @@ export async function updateScreenshotScore(screenshotId: string): Promise<void>
     // Calculate new score
     const calculation = await calculateImportanceScore(baseScore, importDate, interactionCounts);
 
-    // Update database
     await updateImportanceScore(screenshotId, calculation.finalScore);
-
-    console.log(
-      '[Scoring] Updated score for',
-      screenshotId,
-      ':',
-      calculation.finalScore,
-      '(fixed_base:',
-      baseScore,
-      'decay:',
-      calculation.timeDecay.toFixed(3),
-      'bonus:',
-      calculation.interactionBonus,
-      ')'
-    );
   } catch (error) {
     console.error('[Scoring] Failed to update screenshot score:', error);
     throw error;
@@ -132,8 +115,7 @@ export async function updateScreenshotScore(screenshotId: string): Promise<void>
  */
 export async function recalculateAllScores(): Promise<number> {
   try {
-    const screenshots = await getAllScreenshots('all', 10000); // Get all screenshots
-    console.log('[Scoring] Recalculating scores for', screenshots.length, 'screenshots');
+    const screenshots = await getAllScreenshots('all', 10000);
 
     let successCount = 0;
     let failCount = 0;
@@ -148,7 +130,6 @@ export async function recalculateAllScores(): Promise<number> {
       }
     }
 
-    console.log('[Scoring] Recalculation complete:', successCount, 'success,', failCount, 'failed');
     return successCount;
   } catch (error) {
     console.error('[Scoring] Failed to recalculate all scores:', error);
@@ -169,14 +150,11 @@ export async function getTopScreenshots(
   try {
     const database = await getDb();
 
-    // Calculate cutoff date
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysBack);
     const cutoffIso = cutoffDate.toISOString();
 
-    console.log('[Scoring] Getting top', limit, 'screenshots since', cutoffIso);
-
-    const results = await database.getAllAsync<Screenshot>(
+    return database.getAllAsync<Screenshot>(
       `SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score
        FROM screenshots
        WHERE created_at >= ?
@@ -184,9 +162,6 @@ export async function getTopScreenshots(
        LIMIT ?`,
       [cutoffIso, limit]
     );
-
-    console.log('[Scoring] Retrieved', results.length, 'top screenshots');
-    return results;
   } catch (error) {
     console.error('[Scoring] Failed to get top screenshots:', error);
     throw error;
@@ -201,20 +176,15 @@ export async function backfillImportanceScores(): Promise<number> {
   try {
     const database = await getDb();
 
-    // Count screenshots needing backfill
     const countResult = await database.getFirstAsync<{ count: number }>(
       `SELECT COUNT(*) as count FROM screenshots WHERE base_score IS NULL OR base_score = 0`
     );
     const count = countResult?.count ?? 0;
 
     if (count === 0) {
-      console.log('[Scoring] No screenshots need backfilling');
       return 0;
     }
 
-    console.log('[Scoring] Backfilling scores for', count, 'screenshots');
-
-    // Update screenshots with default score
     const now = new Date().toISOString();
     await database.runAsync(
       `UPDATE screenshots
@@ -223,7 +193,6 @@ export async function backfillImportanceScores(): Promise<number> {
       [now]
     );
 
-    console.log('[Scoring] Backfill complete:', count, 'screenshots updated');
     return count;
   } catch (error) {
     console.error('[Scoring] Failed to backfill importance scores:', error);

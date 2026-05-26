@@ -9,9 +9,11 @@ import ImportModal from '../../components/ImportModal';
 import { getAllScreenshots, Screenshot } from '../../services/database';
 import { colors, gradientColors, shadows, borderRadius } from '../../constants/theme';
 import { useStore } from '../../store';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const screenshots = useStore(state => state.screenshots);
   const loadInitialData = useStore(state => state.loadInitialData);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -30,12 +32,10 @@ export default function HomeScreen() {
   }, [screenshots]);
 
   const loadData = useCallback(async () => {
-    console.log('开始加载数据..., selectedCategory:', selectedCategory);
     setLoading(true);
 
-    // 使用 Platform.OS 检测平台：'web' | 'ios' | 'android'
     const isWeb = Platform.OS === 'web';
-    console.log('环境检测结果 Platform.OS:', Platform.OS, 'isWeb:', isWeb);
+    console.log('Platform.OS:', Platform.OS, 'isWeb:', isWeb);
 
     try {
       if (isWeb) {
@@ -51,7 +51,6 @@ export default function HomeScreen() {
       useStore.getState().setScreenshots([]);
     } finally {
       setLoading(false);
-      console.log('数据加载完成，loading设为false');
     }
   }, [selectedCategory]);
 
@@ -70,19 +69,19 @@ export default function HomeScreen() {
   }, [importModalVisible, loadData]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <View style={styles.titleGradientBg}>
-            <Text style={styles.title}>SnapMind</Text>
+            <Text style={[styles.title, { color: colors.primary }]}>SnapMind</Text>
           </View>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={() => router.push('/search')}>
             <Ionicons name="search" size={24} color={colors.primary} />
           </TouchableOpacity>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, { backgroundColor: colors.surfaceContainerHigh, borderColor: colors.primaryFixed }]}>
             <Ionicons name="person" size={18} color={colors.primary} />
           </View>
         </View>
@@ -101,12 +100,12 @@ export default function HomeScreen() {
       ) : screenshots.length === 0 ? (
         <View style={styles.center}>
           <Ionicons name="images-outline" size={64} color={colors.outlineVariant} />
-          <Text style={styles.emptyText}>还没有截图</Text>
-          <Text style={styles.emptySubtext}>点击右下角 + 开始导入</Text>
+          <Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>还没有截图</Text>
+          <Text style={[styles.emptySubtext, { color: colors.outline }]}>点击右下角 + 开始导入</Text>
         </View>
       ) : (
         <ScrollView
-          style={styles.scrollView}
+          style={[styles.scrollView, { backgroundColor: colors.background }]}
           contentContainerStyle={styles.grid}
           showsVerticalScrollIndicator={false}
         >
@@ -170,7 +169,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -192,7 +190,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     fontFamily: 'Quicksand_700Bold',
-    color: colors.primary,
   },
   headerRight: {
     flexDirection: 'row',
@@ -203,9 +200,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.surfaceContainerHigh,
     borderWidth: 2,
-    borderColor: colors.primaryFixed,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -221,7 +216,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 140,
+    paddingBottom: 80,
     gap: 16,
   },
   column: {
@@ -237,11 +232,9 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.onSurfaceVariant,
   },
   emptySubtext: {
     fontSize: 14,
-    color: colors.outline,
   },
   fab: {
     position: 'absolute',

@@ -1,3 +1,23 @@
+// Theme type definitions
+export type ThemeName = 'light' | 'dark';
+
+export interface Theme {
+  background: string;
+  surfaceContainerLow: string;
+  surfaceContainerHigh: string;
+  primary: string;
+  primaryFixed: string;
+  onPrimary: string;
+  onSurface: string;
+  onSurfaceVariant: string;
+  outline: string;
+  outlineVariant: string;
+  error: string;
+  secondary: string;
+  tertiary: string;
+  gradientColors: [string, string];
+}
+
 // Colors extracted from Stitch design system
 export const colors = {
   primary: '#ab3500',
@@ -24,7 +44,7 @@ export const colors = {
   surfaceBright: '#fff8f4',
   surfaceDim: '#f8d4a6',
   surfaceContainer: '#ffebd4',
-  surfaceContainerLow: '#fff1e4',
+  surfaceContainerLow: '#ffffff',
   surfaceContainerLowest: '#ffffff',
   surfaceContainerHigh: '#ffe4c3',
   surfaceContainerHighest: '#ffddb2',
@@ -119,3 +139,48 @@ export const categories = [
   { key: '灵感', label: '灵感' },
   { key: '待办', label: '待办' },
 ] as const;
+
+// Light theme (using existing color constants)
+export const lightTheme: Theme = {
+  background: colors.background,
+  surfaceContainerLow: colors.surfaceContainerLow,
+  surfaceContainerHigh: colors.surfaceContainerHigh,
+  primary: colors.primaryLight,
+  primaryFixed: colors.primaryFixed,
+  onPrimary: colors.onPrimary,
+  onSurface: colors.onSurface,
+  onSurfaceVariant: colors.onSurfaceVariant,
+  outline: colors.outline,
+  outlineVariant: colors.outlineVariant,
+  error: colors.error,
+  secondary: colors.secondaryContainer,
+  tertiary: colors.tertiaryContainer,
+  gradientColors: colors.solar as [string, string],
+};
+
+// Dark theme with deep color palette
+export const darkTheme: Theme = {
+  // 背景色系
+  background: '#1A1A1A',
+  surfaceContainerLow: 'rgba(255,255,255,0.05)',
+  surfaceContainerHigh: 'rgba(255,255,255,0.08)',
+
+  // 主色系
+  primary: '#FF6B35',
+  primaryFixed: '#FFCCBC',
+  onPrimary: '#FFFFFF',
+
+  // 文本色
+  onSurface: '#F5E6D3',
+  onSurfaceVariant: '#C4B5A0',
+  outline: '#7C6A58',
+  outlineVariant: '#3D3228',
+
+  // 功能色
+  error: '#FFB4AB',
+  secondary: '#89F87A',
+  tertiary: '#51A3C9',
+
+  // 渐变
+  gradientColors: ['rgba(255,107,53,0.8)', 'rgba(171,53,0,0.8)'],
+};

@@ -5,6 +5,7 @@ import {
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Sharing from 'expo-sharing';
 import GlassCard from '../../components/GlassCard';
 import TagChip from '../../components/TagChip';
 import { getScreenshotById, deleteScreenshot, updateScreenshot, Screenshot } from '../../services/database';
@@ -12,10 +13,12 @@ import { deleteImage } from '../../services/image';
 import { recordView } from '../../services/interactions';
 import { updateScreenshotScore } from '../../services/scoring';
 import { colors, gradientColors, borderRadius, shadows } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [screenshot, setScreenshot] = useState<Screenshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -23,6 +26,7 @@ export default function DetailScreen() {
   const [addingTag, setAddingTag] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [imageHeight, setImageHeight] = useState(400);
+  const [sharing, setSharing] = useState(false);
   const recordedViewRef = React.useRef<string | null>(null); // Track recorded views to prevent duplicates
 
   useEffect(() => {
@@ -141,12 +145,61 @@ export default function DetailScreen() {
     setAddingTag(false);
   };
 
+  const handleShare = async () => {
+    if (!screenshot) {
+      console.warn('[Share] No screenshot data');
+      Alert.alert('提示', '图片数据未加载完成');
+      return;
+    }
+
+    // Prevent multiple simultaneous share attempts
+    if (sharing) {
+      console.log('[Share] Already sharing, ignoring');
+      return;
+    }
+
+    // Web platform doesn't support sharing
+    if (Platform.OS === 'web') {
+      Alert.alert('提示', '网页端暂不支持分享功能，请使用移动端应用');
+      return;
+    }
+
+    setSharing(true);
+
+    try {
+      console.log('[Share] Starting share for:', screenshot.image_path);
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('提示', '当前设备不支持分享功能');
+        return;
+      }
+
+      await Sharing.shareAsync(screenshot.image_path, {
+        mimeType: 'image/jpeg',
+        dialogTitle: '分享截图',
+      });
+      console.log('[Share] Share completed');
+    } catch (error) {
+      console.error('[Share] Failed to share:', error);
+      // User cancelled or system dismissed the share sheet - this is normal, don't alert
+      // Only alert on actual errors
+      if (error && typeof error === 'object' && 'message' in error && !(error as any).message.includes('cancelled')) {
+        Alert.alert('分享失败', '无法分享此图片，请稍后重试');
+      }
+    } finally {
+      // Small delay to prevent rapid re-clicks
+      setTimeout(() => {
+        setSharing(false);
+      }, 300);
+    }
+  };
+
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>加载中...</Text>
+          <Text style={[styles.loadingText, { color: colors.onSurfaceVariant }]}>加载中...</Text>
         </View>
       </View>
     );
@@ -154,11 +207,11 @@ export default function DetailScreen() {
 
   if (error || !screenshot) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.center}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.error} />
-          <Text style={styles.errorText}>加载失败</Text>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={[styles.errorText, { color: colors.error }]}>加载失败</Text>
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.primary }]}>
             <Text style={styles.backButtonText}>返回</Text>
           </TouchableOpacity>
         </View>
@@ -181,15 +234,24 @@ export default function DetailScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{screenshot.category || '详情'}</Text>
-        <TouchableOpacity style={styles.headerBtn}>
-          <Ionicons name="ellipsis-horizontal" size={24} color={colors.onSurfaceVariant} />
+        <Text style={[styles.headerTitle, { color: colors.primary }]}>{screenshot.category || '详情'}</Text>
+        <TouchableOpacity
+          onPress={handleShare}
+          style={styles.headerBtn}
+          disabled={sharing}
+          activeOpacity={sharing ? 1 : 0.7}
+        >
+          {sharing ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="share-outline" size={24} color={sharing ? colors.outline : colors.primary} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -213,9 +275,9 @@ export default function DetailScreen() {
               <LinearGradient colors={gradientColors.solar} style={styles.aiBadge}>
                 <Ionicons name="sparkles" size={18} color="#fff" />
               </LinearGradient>
-              <Text style={styles.summaryTitle}>AI 摘要</Text>
+              <Text style={[styles.summaryTitle, { color: colors.primary }]}>AI 摘要</Text>
             </View>
-            <Text style={styles.summaryText}>{screenshot.summary || '暂无摘要'}</Text>
+            <Text style={[styles.summaryText, { color: colors.onSurfaceVariant }]}>{screenshot.summary || '暂无摘要'}</Text>
           </GlassCard>
         </View>
 
@@ -233,7 +295,7 @@ export default function DetailScreen() {
             {addingTag ? (
               <View style={styles.addTagRow}>
                 <TextInput
-                  style={styles.tagInput}
+                  style={[styles.tagInput, { borderColor: colors.outlineVariant, color: colors.onSurface }]}
                   value={newTag}
                   onChangeText={setNewTag}
                   placeholder="新标签"
@@ -245,7 +307,7 @@ export default function DetailScreen() {
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.addTagBtn} onPress={() => setAddingTag(true)}>
+              <TouchableOpacity style={[styles.addTagBtn, { borderColor: colors.outlineVariant }]} onPress={() => setAddingTag(true)}>
                 <Ionicons name="add" size={18} color={colors.outline} />
               </TouchableOpacity>
             )}
@@ -255,10 +317,10 @@ export default function DetailScreen() {
         {/* OCR Text */}
         <View style={styles.section}>
           <TouchableOpacity
-            style={styles.ocrToggle}
+            style={[styles.ocrToggle, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}
             onPress={() => setOcrExpanded(!ocrExpanded)}
           >
-            <Text style={styles.ocrToggleText}>识别到的文字</Text>
+            <Text style={[styles.ocrToggleText, { color: colors.onSurface }]}>识别到的文字</Text>
             <Ionicons
               name={ocrExpanded ? 'chevron-up' : 'chevron-down'}
               size={20}
@@ -266,8 +328,8 @@ export default function DetailScreen() {
             />
           </TouchableOpacity>
           {ocrExpanded && (
-            <View style={styles.ocrContent}>
-              <Text style={styles.ocrText}>
+            <View style={[styles.ocrContent, { backgroundColor: colors.surfaceContainerLow }]}>
+              <Text style={[styles.ocrText, { color: colors.onSurfaceVariant }]}>
                 {screenshot.raw_text || '无识别文字'}
               </Text>
             </View>
@@ -278,11 +340,11 @@ export default function DetailScreen() {
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
             <Ionicons name="calendar-outline" size={14} color={colors.outline} />
-            <Text style={styles.footerDate}>{formatFullDate(screenshot.created_at)}</Text>
+            <Text style={[styles.footerDate, { color: colors.outline }]}>{formatFullDate(screenshot.created_at)}</Text>
           </View>
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+          <TouchableOpacity style={[styles.deleteBtn, { backgroundColor: colors.errorContainer }]} onPress={handleDelete}>
             <Ionicons name="trash-outline" size={16} color={colors.error} />
-            <Text style={styles.deleteBtnText}>Delete</Text>
+            <Text style={[styles.deleteBtnText, { color: colors.error }]}>Delete</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -291,12 +353,11 @@ export default function DetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
-  loadingText: { textAlign: 'center', marginTop: 100, fontSize: 16, color: colors.onSurfaceVariant },
-  errorText: { fontSize: 18, fontWeight: '600', color: colors.error },
+  loadingText: { textAlign: 'center', marginTop: 100, fontSize: 16 },
+  errorText: { fontSize: 18, fontWeight: '600' },
   backButton: {
-    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -309,10 +370,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
   },
   headerBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: colors.primary },
+  headerTitle: { fontSize: 20, fontWeight: '700' },
   scroll: { flex: 1 },
   image: {
     width: '100%',
@@ -322,8 +382,8 @@ const styles = StyleSheet.create({
   summaryCard: { padding: 20 },
   summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   aiBadge: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  summaryTitle: { fontSize: 20, fontWeight: '600', color: colors.primary },
-  summaryText: { fontSize: 16, lineHeight: 26, color: colors.onSurfaceVariant },
+  summaryTitle: { fontSize: 20, fontWeight: '600' },
+  summaryText: { fontSize: 16, lineHeight: 26 },
   categoryRow: { marginBottom: 12 },
   categoryPill: { alignSelf: 'flex-start', paddingHorizontal: 24, paddingVertical: 8, borderRadius: borderRadius.full },
   categoryPillText: { color: '#fff', fontSize: 14, fontWeight: '500' },
@@ -331,7 +391,6 @@ const styles = StyleSheet.create({
   addTagRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tagInput: {
     borderWidth: 1,
-    borderColor: colors.outlineVariant,
     borderRadius: borderRadius.full,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -343,7 +402,6 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'rgba(141, 113, 104, 0.3)',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -353,19 +411,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.4)',
     borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: colors.outlineVariant,
   },
-  ocrToggleText: { fontSize: 14, fontWeight: '500', color: colors.onSurface },
+  ocrToggleText: { fontSize: 14, fontWeight: '500' },
   ocrContent: {
-    backgroundColor: colors.surfaceContainerLow,
     padding: 16,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
-  ocrText: { fontSize: 14, lineHeight: 24, color: colors.onSurfaceVariant },
+  ocrText: { fontSize: 14, lineHeight: 24 },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -375,15 +430,14 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   footerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  footerDate: { fontSize: 12, color: colors.outline },
+  footerDate: { fontSize: 12 },
   deleteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(186, 26, 26, 0.05)',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: borderRadius.md,
   },
-  deleteBtnText: { fontSize: 12, fontWeight: '500', color: colors.error },
+  deleteBtnText: { fontSize: 12, fontWeight: '500' },
 });

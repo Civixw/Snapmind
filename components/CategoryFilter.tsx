@@ -3,6 +3,7 @@ import { ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, borderRadius, gradientColors } from '../constants/theme';
 import { categories } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
 
 interface Props {
   selected: string;
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export default function CategoryFilter({ selected, onSelect }: Props) {
+  const { colors } = useTheme();
+
   return (
     <ScrollView
       horizontal
@@ -32,18 +35,18 @@ export default function CategoryFilter({ selected, onSelect }: Props) {
                 end={{ x: 1, y: 1 }}
                 style={styles.pillGradient}
               />
-              <Text style={[styles.labelSelected, styles.labelAbove]}>{cat.label}</Text>
+              <Text style={[styles.labelSelected, styles.labelAbove, { color: colors.onPrimary }]}>{cat.label}</Text>
             </TouchableOpacity>
           );
         }
         return (
           <TouchableOpacity
             key={cat.key}
-            style={[styles.pillTouchable, styles.pillDefaultBg]}
+            style={[styles.pillTouchable, styles.pillDefaultBg, { backgroundColor: colors.surfaceContainerLow }]}
             onPress={() => onSelect(cat.key)}
             activeOpacity={0.7}
           >
-            <Text style={styles.labelDefault}>{cat.label}</Text>
+            <Text style={[styles.labelDefault, { color: colors.onSurface }]}>{cat.label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -68,7 +71,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   pillSelected: {
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
@@ -77,19 +79,15 @@ const styles = StyleSheet.create({
   labelAbove: {
     zIndex: 1,
   },
-  pillDefaultBg: {
-    backgroundColor: colors.surfaceContainerLow,
-  },
+  pillDefaultBg: {},
   labelSelected: {
     fontSize: 14,
     fontWeight: '500',
     fontFamily: 'DMSans_500Medium',
-    color: colors.onPrimary,
   },
   labelDefault: {
     fontSize: 14,
     fontWeight: '500',
     fontFamily: 'DMSans_500Medium',
-    color: colors.onSurfaceVariant,
   },
 });

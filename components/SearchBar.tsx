@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, borderRadius, shadows } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
 
 interface Props {
   placeholder?: string;
@@ -20,15 +21,17 @@ export default function SearchBar({
   editable = true,
   autoFocus = false,
 }: Props) {
+  const { colors } = useTheme();
+
   const input = (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
       <View style={styles.iconWrapper}>
         <Ionicons name="search" size={20} color={colors.primary} />
       </View>
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="rgba(89, 65, 57, 0.5)"
+        placeholderTextColor={colors.onSurfaceVariant}
         value={value}
         onChangeText={onChangeText}
         editable={editable}
@@ -48,13 +51,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 2,
     gap: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
     ...(Platform.OS === 'ios' ? shadows.card : {}),
   },
   iconWrapper: {
@@ -63,7 +64,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: colors.onSurface,
     backgroundColor: 'transparent',
   },
 });
