@@ -169,9 +169,9 @@ export default function PrivacyPolicyScreen() {
           <Markdown
             style={{
               body: { color: colors.onSurface, fontSize: 16, lineHeight: 24 },
-              heading1: { color: colors.primary, fontSize: 28, fontWeight: '700', marginTop: 16, marginBottom: 8 },
-              heading2: { color: colors.primary, fontSize: 22, fontWeight: '600', marginTop: 12, marginBottom: 6 },
-              heading3: { color: colors.onSurface, fontSize: 18, fontWeight: '600', marginTop: 8, marginBottom: 4 },
+              heading1: { color: colors.primary, fontSize: 28, fontWeight: '700', marginTop: 16, marginBottom: 8, width: '100%', lineHeight: 36 },
+              heading2: { color: colors.primary, fontSize: 22, fontWeight: '600', marginTop: 12, marginBottom: 6, width: '100%', lineHeight: 30 },
+              heading3: { color: colors.onSurface, fontSize: 18, fontWeight: '600', marginTop: 8, marginBottom: 4, width: '100%', lineHeight: 24 },
               paragraph: { marginBottom: 12 },
               list_item: { marginBottom: 4, flexDirection: 'row' },
               bullet_list: { marginLeft: 16, marginBottom: 12 },
