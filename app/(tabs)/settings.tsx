@@ -14,13 +14,14 @@ import { useTheme } from '../../hooks/useTheme';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const isLoadingRef = React.useRef(false);
   const { colors } = useTheme();
   const [storageInfo, setStorageInfo] = useState<{
     loading: boolean;
     fileCount: number;
     formatted: string;
   }>({
-    loading: true,
+    loading: false,
     fileCount: 0,
     formatted: '...',
   });
@@ -35,13 +36,22 @@ export default function SettingsScreen() {
   }, [apiKey]);
 
   const loadStorageInfo = async () => {
-    setStorageInfo({ loading: true, fileCount: 0, formatted: '...' });
+    if (isLoadingRef.current) {
+      return;
+    }
+    isLoadingRef.current = true;
+
     const info = await getStorageInfo();
+
     setStorageInfo({
       loading: false,
       fileCount: info.fileCount,
       formatted: info.formatted,
     });
+
+    setTimeout(() => {
+      isLoadingRef.current = false;
+    }, 1000);
   };
 
   useFocusEffect(
@@ -116,7 +126,11 @@ export default function SettingsScreen() {
           <Text style={[styles.headerTitle, { color: colors.primary }]}>设置</Text>
         </View>
       </SafeAreaView>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
 
       {/* Stats Card */}
       <View style={styles.section}>
@@ -232,7 +246,6 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={{ height: 120 }} />
     </ScrollView>
     </View>
   );
