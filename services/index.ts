@@ -20,3 +20,6 @@ export * from './storage';
 
 // Scoring Service - Importance score calculation and management
 export * from './scoring';
+
+// Legal Service - Legal documents (privacy policy, terms of service)
+export * from './legal';

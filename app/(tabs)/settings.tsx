@@ -226,11 +226,17 @@ export default function SettingsScreen() {
           <Text style={[styles.aboutName, { color: colors.primary }]}>SnapMind</Text>
           <Text style={[styles.aboutVersion, { color: colors.onSurfaceVariant }]}>Version 1.0.0 (Build 1)</Text>
           <View style={styles.aboutLinks}>
-            <TouchableOpacity style={[styles.aboutLink, { borderColor: colors.primary }]}>
+            <TouchableOpacity
+              style={[styles.aboutLink, { borderColor: colors.primary }]}
+              onPress={() => router.push('/legal/terms')}
+            >
               <Ionicons name="document-text-outline" size={14} color={colors.primary} />
               <Text style={[styles.aboutLinkText, { color: colors.primary }]}>服务条款</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.aboutLink, { borderColor: colors.primary }]}>
+            <TouchableOpacity
+              style={[styles.aboutLink, { borderColor: colors.primary }]}
+              onPress={() => router.push('/legal/privacy')}
+            >
               <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
               <Text style={[styles.aboutLinkText, { color: colors.primary }]}>隐私政策</Text>
             </TouchableOpacity>
