@@ -99,6 +99,18 @@ export default function SearchScreen() {
     });
   };
 
+  const handleBack = () => {
+    // 如果有搜索结果，先清空搜索，回到默认状态
+    if (hasSearched || query.trim()) {
+      setResults([]);
+      setHasSearched(false);
+      setQuery('');
+    } else {
+      // 如果没有搜索结果，则返回上一页
+      router.back();
+    }
+  };
+
   const handleSearch = async (searchQuery?: string) => {
     console.log('[Search] handleSearch called, searchQuery:', searchQuery, 'query state:', query);
     const trimmed = (searchQuery ?? query).trim();
@@ -168,7 +180,7 @@ export default function SearchScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <SafeAreaView style={[styles.header, { backgroundColor: colors.background }]} edges={['top']}>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surfaceContainerHigh }]}>
+        <TouchableOpacity onPress={handleBack} style={[styles.backBtn, { backgroundColor: colors.surfaceContainerHigh }]}>
           <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <View style={styles.searchBarWrapper}>
