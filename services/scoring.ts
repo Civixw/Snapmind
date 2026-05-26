@@ -155,7 +155,7 @@ export async function getTopScreenshots(
     const cutoffIso = cutoffDate.toISOString();
 
     return database.getAllAsync<Screenshot>(
-      `SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score
+      `SELECT id, image_path, raw_text, summary, category, tags, embedding, created_at, importance_score, score_updated_at, base_score, sensitive_flags
        FROM screenshots
        WHERE created_at >= ?
        ORDER BY importance_score DESC, created_at DESC

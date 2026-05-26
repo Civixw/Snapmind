@@ -21,6 +21,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [importModalVisible, setImportModalVisible] = useState(false);
   const prevImportModalVisible = useRef(false);
+  const initialLoadDone = useRef(false);
 
   // Split into two columns for true masonry
   const { left, right } = useMemo(() => {
@@ -32,8 +33,8 @@ export default function HomeScreen() {
     return { left: l, right: r };
   }, [screenshots]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
 
     const isWeb = Platform.OS === 'web';
     console.log('Platform.OS:', Platform.OS, 'isWeb:', isWeb);
@@ -51,20 +52,30 @@ export default function HomeScreen() {
       console.error('Failed to load screenshots:', e);
       useStore.getState().setScreenshots([]);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
+      initialLoadDone.current = true;
     }
   }, [selectedCategory]);
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      loadData(!initialLoadDone.current);
     }, [loadData])
   );
+
+  // Reload with loading indicator when category changes
+  const prevCategory = useRef(selectedCategory);
+  useEffect(() => {
+    if (prevCategory.current !== selectedCategory && initialLoadDone.current) {
+      loadData(true);
+    }
+    prevCategory.current = selectedCategory;
+  }, [selectedCategory, loadData]);
 
   // When the import modal closes, reload data to show newly imported items
   useEffect(() => {
     if (prevImportModalVisible.current && !importModalVisible) {
-      loadData();
+      loadData(true);
     }
     prevImportModalVisible.current = importModalVisible;
   }, [importModalVisible, loadData]);
@@ -120,8 +131,8 @@ export default function HomeScreen() {
                 category={item.category}
                 tags={item.tags}
                 createdAt={item.created_at}
-                importanceScore={item.importance_score}
-                sensitiveFlags={item.sensitive_flags}
+                importanceScore={item.importance_score ?? undefined}
+                sensitiveFlags={item.sensitive_flags ?? undefined}
                 onPress={() => router.push(`/detail/${item.id}`)}
               />
             ))}
@@ -136,8 +147,8 @@ export default function HomeScreen() {
                 category={item.category}
                 tags={item.tags}
                 createdAt={item.created_at}
-                importanceScore={item.importance_score}
-                sensitiveFlags={item.sensitive_flags}
+                importanceScore={item.importance_score ?? undefined}
+                sensitiveFlags={item.sensitive_flags ?? undefined}
                 onPress={() => router.push(`/detail/${item.id}`)}
               />
             ))}

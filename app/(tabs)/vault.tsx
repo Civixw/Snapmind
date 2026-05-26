@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -27,7 +27,8 @@ function VaultScreenshotCard({ item, onPress }: VaultScreenshotCardProps) {
       category={item.category}
       tags={item.tags}
       createdAt={item.created_at}
-      importanceScore={item.importance_score}
+      importanceScore={item.importance_score ?? undefined}
+      sensitiveFlags={item.sensitive_flags ?? undefined}
       onPress={onPress}
     />
   );
@@ -39,9 +40,10 @@ export default function VaultScreen() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('week');
   const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const initialLoadDone = useRef(false);
 
-  const loadVault = async (window: TimeWindow, autoDowngrade: boolean = true) => {
-    setLoading(true);
+  const loadVault = async (window: TimeWindow, autoDowngrade: boolean = true, showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       // Refresh all scores in background before loading vault content
       // Fire-and-forget: don't block the UI
@@ -66,13 +68,14 @@ export default function VaultScreen() {
       console.error('[Vault] Failed to load:', error);
       setScreenshots([]);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
+      initialLoadDone.current = true;
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      loadVault(timeWindow);
+      loadVault(timeWindow, true, !initialLoadDone.current);
     }, [timeWindow])
   );
 
