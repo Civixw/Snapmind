@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenshotCard from '../../components/ScreenshotCard';
 import { getTopScreenshots, recalculateAllScores } from '../../services/scoring';
 import { colors, borderRadius } from '../../constants/theme';
@@ -87,12 +88,12 @@ export default function VaultScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <SafeAreaView style={[styles.header, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.headerTitleWrapper}>
           <Text style={[styles.headerTitle, { color: colors.primary }]}>智能精选</Text>
           <Text style={[styles.headerSubtitle, { color: colors.onSurfaceVariant }]}>AI 为你挑选的高光时刻</Text>
         </View>
-      </View>
+      </SafeAreaView>
 
       {/* Segmented Control */}
       <View style={[styles.segmentedControl, { backgroundColor: colors.surfaceContainerLow }]}>
@@ -162,7 +163,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 60,
     paddingBottom: 16,
   },
   headerTitleWrapper: {},

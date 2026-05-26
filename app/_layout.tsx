@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, Platform } from 'react-native';
+import { StyleSheet, Text, View, Platform, StatusBar } from 'react-native';
 import { Stack, SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme as useThemeContext } from '../hooks/useTheme';
 import {
   Quicksand_600SemiBold,
   Quicksand_700Bold,
@@ -21,6 +23,31 @@ import { backfillImportanceScores, recalculateAllScores } from '../services/scor
 import { ThemeProvider } from '../contexts/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
+
+function StatusBarController() {
+  const insets = useSafeAreaInsets();
+  const { colors, activeTheme } = useThemeContext();
+
+  return (
+    <>
+      <StatusBar
+        barStyle={activeTheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
+      {Platform.OS === 'ios' && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top,
+          backgroundColor: colors.background,
+          zIndex: 9999
+        }} />
+      )}
+    </>
+  );
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -89,6 +116,7 @@ export default function RootLayout() {
       )}
       <ErrorBoundary>
         <ThemeProvider>
+          <StatusBarController />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="detail/[id]" options={{ headerShown: false }} />

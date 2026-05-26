@@ -39,9 +39,9 @@ export const colors = {
   onTertiary: '#ffffff',
   onTertiaryContainer: '#00364a',
 
-  background: '#fff8f4',
-  surface: '#fff8f4',
-  surfaceBright: '#fff8f4',
+  background: '#ffffff',
+  surface: '#ffffff',
+  surfaceBright: '#ffffff',
   surfaceDim: '#f8d4a6',
   surfaceContainer: '#ffebd4',
   surfaceContainerLow: '#ffffff',

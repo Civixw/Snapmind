@@ -3,6 +3,7 @@ import {
   View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform, Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
@@ -236,7 +237,7 @@ export default function DetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface }]}>
+      <SafeAreaView style={[styles.header, { backgroundColor: colors.background }]} edges={['top']}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
@@ -253,7 +254,7 @@ export default function DetailScreen() {
             <Ionicons name="share-outline" size={24} color={sharing ? colors.outline : colors.primary} />
           )}
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Full Image */}
@@ -368,7 +369,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
     paddingBottom: 12,
   },
   headerBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },

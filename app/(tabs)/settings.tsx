@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import GlassCard from '../../components/GlassCard';
 import { deleteScreenshot, getAllScreenshots } from '../../services/database';
 import { getStorageInfo } from '../../services/storage';
@@ -109,12 +110,13 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView style={[styles.header, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.headerTitleWrapper}>
           <Text style={[styles.headerTitle, { color: colors.primary }]}>设置</Text>
         </View>
-      </View>
+      </SafeAreaView>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
 
       {/* Stats Card */}
       <View style={styles.section}>
@@ -232,12 +234,13 @@ export default function SettingsScreen() {
 
       <View style={{ height: 120 }} />
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 },
+  header: { paddingHorizontal: 20, paddingBottom: 16 },
   headerTitleWrapper: {},
   headerTitle: { fontSize: 24, fontWeight: '700', fontFamily: 'Quicksand_700Bold' },
   section: { paddingHorizontal: 20, marginBottom: 24 },

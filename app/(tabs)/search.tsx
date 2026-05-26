@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, ImageBackground } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import SearchBar from '../../components/SearchBar';
@@ -40,11 +41,23 @@ const RECOMMEND_ITEMS = [
   },
 ];
 
-const HOT_TAG_STYLES = [
-  { bgLight: 'rgba(0,110,12,0.15)', bgDark: 'rgba(137,248,122,0.15)', borderLight: 'rgba(0,110,12,0.25)', borderDark: 'rgba(137,248,122,0.25)', textLight: '#006e0c', textDark: 'secondary' as const },
-  { bgLight: 'rgba(171,53,0,0.1)', bgDark: 'rgba(255,107,53,0.15)', borderLight: 'rgba(171,53,0,0.2)', borderDark: 'rgba(255,107,53,0.3)', text: 'primary' as const },
-  { bgLight: 'rgba(81,163,201,0.1)', bgDark: 'rgba(81,163,201,0.15)', borderLight: 'rgba(81,163,201,0.25)', borderDark: 'rgba(81,163,201,0.3)', text: 'tertiary' as const },
-  { bgLight: 'rgba(255,228,195,0.6)', bgDark: 'rgba(255,107,53,0.15)', borderLight: 'rgba(255,255,255,0.5)', borderDark: 'rgba(255,107,53,0.3)', text: 'onSurfaceVariant' as const },
+type TagTextColor = 'primary' | 'secondary' | 'tertiary' | 'onSurfaceVariant';
+
+interface HotTagStyle {
+  bgLight: string;
+  bgDark: string;
+  borderLight: string;
+  borderDark: string;
+  text?: TagTextColor;
+  textLight?: string;
+  textDark?: TagTextColor;
+}
+
+const HOT_TAG_STYLES: HotTagStyle[] = [
+  { bgLight: 'rgba(0,110,12,0.15)', bgDark: 'rgba(137,248,122,0.15)', borderLight: 'rgba(0,110,12,0.25)', borderDark: 'rgba(137,248,122,0.25)', textLight: '#006e0c', textDark: 'secondary' },
+  { bgLight: 'rgba(171,53,0,0.1)', bgDark: 'rgba(255,107,53,0.15)', borderLight: 'rgba(171,53,0,0.2)', borderDark: 'rgba(255,107,53,0.3)', text: 'primary' },
+  { bgLight: 'rgba(81,163,201,0.1)', bgDark: 'rgba(81,163,201,0.15)', borderLight: 'rgba(81,163,201,0.25)', borderDark: 'rgba(81,163,201,0.3)', text: 'tertiary' },
+  { bgLight: 'rgba(255,228,195,0.6)', bgDark: 'rgba(255,107,53,0.15)', borderLight: 'rgba(255,255,255,0.5)', borderDark: 'rgba(255,107,53,0.3)', text: 'onSurfaceVariant' },
 ];
 
 export default function SearchScreen() {
@@ -154,27 +167,21 @@ export default function SearchScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.header, { backgroundColor: colors.background }]} edges={['top']}>
         <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.surfaceContainerHigh }]}>
           <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <View style={styles.searchInputWrapper}>
+        <View style={styles.searchBarWrapper}>
           <SearchBar
             value={query}
             onChangeText={setQuery}
             autoFocus
             placeholder="咖啡店、旅行攻略、聊天地址..."
+            showSearchButton
+            onSearchPress={() => handleSearch()}
           />
         </View>
-        <TouchableOpacity onPress={() => handleSearch()}>
-          <LinearGradient
-            colors={['#ff6b35', '#ab3500']}
-            style={styles.searchBtn}
-          >
-            <Text style={styles.searchBtnText}>Search</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+      </SafeAreaView>
 
       {/* Content */}
       {searching ? (
@@ -301,13 +308,8 @@ export default function SearchScreen() {
                     const isDark = colors.background === '#1A1A1A';
                     const bgColor = isDark ? ts.bgDark : ts.bgLight;
                     const borderColor = isDark ? ts.borderDark : ts.borderLight;
-                    const textColor = ts.text === 'primary' ? colors.primary :
-                                     ts.text === 'secondary' ? colors.secondary :
-                                     ts.text === 'tertiary' ? colors.tertiary :
-                                     ts.text === 'onSurfaceVariant' ? colors.onSurfaceVariant :
-                                     ts.text;
-                    // Handle first tag's special light/dark text colors
-                    const finalTextColor = 'textLight' in ts ? (isDark ? colors.secondary : ts.textLight) : textColor;
+                    const textColor: string = ts.text ? colors[ts.text] : colors.onSurfaceVariant;
+                    const finalTextColor = ts.textLight ? (isDark ? colors.secondary : ts.textLight) : textColor;
                     return (
                       <TouchableOpacity
                         key={tag}
@@ -333,10 +335,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingLeft: 12,
+    paddingRight: 12,
     paddingBottom: 12,
-    gap: 12,
+    gap: 8,
   },
   backBtn: {
     width: 40,
@@ -345,14 +347,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  searchInputWrapper: { flex: 1 },
-  searchBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: borderRadius.full,
-    ...shadows.fab,
+  searchBarWrapper: {
+    flex: 1,
   },
-  searchBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   searchingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
   spinnerRing: { width: 64, height: 64, justifyContent: 'center', alignItems: 'center' },
   spinnerTrack: {

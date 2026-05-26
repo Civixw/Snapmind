@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import CategoryFilter from '../../components/CategoryFilter';
@@ -71,7 +72,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <SafeAreaView style={[styles.header, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.titleRow}>
           <View style={styles.titleGradientBg}>
             <Text style={[styles.title, { color: colors.primary }]}>SnapMind</Text>
@@ -85,7 +86,7 @@ export default function HomeScreen() {
             <Ionicons name="person" size={18} color={colors.primary} />
           </View>
         </View>
-      </View>
+      </SafeAreaView>
 
       {/* Category Filter */}
       <View style={styles.categoryContainer}>
@@ -175,7 +176,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
     paddingBottom: 12,
   },
   titleRow: {
