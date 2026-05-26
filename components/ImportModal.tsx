@@ -115,6 +115,7 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
           category: analysis.category,
           tags: JSON.stringify(analysis.tags),
           embedding: JSON.stringify(embedding),
+          sensitive_flags: JSON.stringify(analysis.sensitive_flags || []),
           created_at: new Date().toISOString(),
           importance_score: analysis.importance_score ?? 50,
           score_updated_at: new Date().toISOString(),
@@ -151,6 +152,8 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onDismiss={handleClose}>
+      {/* Background layer for the entire modal area (including rounded corners) */}
+      <View style={[styles.modalBackground, { backgroundColor: colors.background }]} />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.handle} />
 
@@ -196,7 +199,7 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
               ))}
             </ScrollView>
             <TouchableOpacity onPress={startAnalysis} style={styles.analyzeBtn}>
-              <LinearGradient colors={colors.gradientColors} style={styles.analyzeBtnGradient}>
+              <LinearGradient colors={colors.gradientColors || ['#FF6B35', '#AB3500']} style={styles.analyzeBtnGradient}>
                 <Text style={[styles.analyzeBtnText, { color: colors.onPrimary }]}>开始分析 ({selectedUris.length})</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -250,7 +253,7 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
             </ScrollView>
             {progressItems.every((item) => item.status === 'done' || item.status === 'error') && (
               <TouchableOpacity onPress={finish} style={styles.doneBtn}>
-                <LinearGradient colors={colors.gradientColors} style={styles.analyzeBtnGradient}>
+                <LinearGradient colors={colors.gradientColors || ['#FF6B35', '#AB3500']} style={styles.analyzeBtnGradient}>
                   <Text style={[styles.analyzeBtnText, { color: colors.onPrimary }]}>完成，返回首页</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -263,6 +266,13 @@ export default function ImportModal({ visible, onClose, onImportComplete }: Prop
 }
 
 const styles = StyleSheet.create({
+  modalBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   container: {
     flex: 1,
     borderTopLeftRadius: 32,

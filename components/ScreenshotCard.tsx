@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, borderRadius, shadows } from '../constants/theme';
+import { usePrivacy } from '../contexts/PrivacyContext';
 
 const ASPECT_RATIOS = [4 / 5, 1, 16 / 9, 3 / 4];
 
@@ -44,6 +45,7 @@ interface Props {
 export default function ScreenshotCard({ id, imagePath, summary, category, tags: tagsJson, createdAt, onPress, importanceScore, sensitiveFlags }: Props) {
   const aspectRatio = pickAspectRatio(id);
   const badge = badgeColor(category);
+  const { showSensitiveMarkers } = usePrivacy();
   const [imageError, setImageError] = useState(false);
   const tags: string[] = (() => {
     try { return JSON.parse(tagsJson); } catch { return []; }
@@ -62,6 +64,8 @@ export default function ScreenshotCard({ id, imagePath, summary, category, tags:
   const hasSensitiveContent = sensitiveFlagsList.length > 0;
 
   const renderScoreBadge = () => {
+    // Don't show score badge if there's sensitive content and markers are enabled (sensitive badge takes priority)
+    if (hasSensitiveContent && showSensitiveMarkers) return null;
     if (importanceScore === undefined || importanceScore < 60) return null;
 
     if (importanceScore >= 80) {
@@ -104,7 +108,7 @@ export default function ScreenshotCard({ id, imagePath, summary, category, tags:
               <Text style={[styles.categoryLabel, { color: badge.text }]}>{category}</Text>
             </View>
             {renderScoreBadge()}
-            {hasSensitiveContent && (
+            {hasSensitiveContent && showSensitiveMarkers && (
               <View style={styles.sensitiveBadge}>
                 <Ionicons name="lock-closed" size={12} color={colors.error} />
                 <Text style={styles.sensitiveText}>敏感</Text>

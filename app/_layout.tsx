@@ -21,6 +21,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { useStore } from '../store';
 import { backfillImportanceScores, recalculateAllScores } from '../services/scoring';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { PrivacyProvider } from '../contexts/PrivacyContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -156,12 +157,14 @@ export default function RootLayout() {
         }} />
       )}
       <ThemeProvider>
-        <ThemedBackground>
-          <ErrorBoundary>
-            <StatusBarController />
-            <RootNavigator />
-          </ErrorBoundary>
-        </ThemedBackground>
+        <PrivacyProvider>
+          <ThemedBackground>
+            <ErrorBoundary>
+              <StatusBarController />
+              <RootNavigator />
+            </ErrorBoundary>
+          </ThemedBackground>
+        </PrivacyProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

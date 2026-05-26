@@ -121,6 +121,7 @@ export default function HomeScreen() {
                 tags={item.tags}
                 createdAt={item.created_at}
                 importanceScore={item.importance_score}
+                sensitiveFlags={item.sensitive_flags}
                 onPress={() => router.push(`/detail/${item.id}`)}
               />
             ))}
@@ -136,6 +137,7 @@ export default function HomeScreen() {
                 tags={item.tags}
                 createdAt={item.created_at}
                 importanceScore={item.importance_score}
+                sensitiveFlags={item.sensitive_flags}
                 onPress={() => router.push(`/detail/${item.id}`)}
               />
             ))}

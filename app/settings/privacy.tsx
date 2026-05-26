@@ -5,13 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import GlassCard from '../../components/GlassCard';
 import { useTheme } from '../../hooks/useTheme';
+import { usePrivacy } from '../../contexts/PrivacyContext';
 import { borderRadius } from '../../constants/theme';
 import { getAllScreenshots } from '../../services/database';
 
 export default function PrivacyScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const [showSensitiveMarkers, setShowSensitiveMarkers] = useState(true);
+  const { showSensitiveMarkers, setShowSensitiveMarkers } = usePrivacy();
   const [sensitiveCount, setSensitiveCount] = useState(0);
 
   useEffect(() => {
