@@ -24,6 +24,47 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
+function ThemedBackground({ children }: { children: React.ReactNode }) {
+  const { colors } = useThemeContext();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {children}
+    </View>
+  );
+}
+
+function RootNavigator() {
+  const { colors } = useThemeContext();
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+        presentation: 'card',
+      }}
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="detail/[id]" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="settings/appearance"
+        options={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="settings/privacy"
+        options={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+          presentation: 'card',
+        }}
+      />
+    </Stack>
+  );
+}
+
 function StatusBarController() {
   const insets = useSafeAreaInsets();
   const { colors, activeTheme } = useThemeContext();
@@ -114,15 +155,14 @@ export default function RootLayout() {
           `
         }} />
       )}
-      <ErrorBoundary>
-        <ThemeProvider>
-          <StatusBarController />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="detail/[id]" options={{ headerShown: false }} />
-          </Stack>
-        </ThemeProvider>
-      </ErrorBoundary>
+      <ThemeProvider>
+        <ThemedBackground>
+          <ErrorBoundary>
+            <StatusBarController />
+            <RootNavigator />
+          </ErrorBoundary>
+        </ThemedBackground>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
