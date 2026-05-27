@@ -10,6 +10,7 @@
     "jsEngine": "hermes",
     "newArchEnabled": false,
     "splash": {
+      "image": "./assets/splash-icon.png",
       "backgroundColor": "#fff8f4"
     },
     "ios": {
