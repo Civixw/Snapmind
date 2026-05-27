@@ -40,4 +40,7 @@ yarn-error.*
 /ios
 /android
 
+# Ignore PNG files except in assets directory
 *.png
+!assets/*.png
+!assets/**/*.png
