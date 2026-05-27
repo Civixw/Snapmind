@@ -1,4 +1,5 @@
 import { storageAdapter } from '../../store/persist';
+import { useStore } from '../../store/useStore';
 import type { AIProvider, ProviderConfigWithKey } from './config';
 import { PROVIDER_CONFIGS } from './config';
 
@@ -23,34 +24,23 @@ function createEmptyProviderKeys(): ProviderKeys {
   };
 }
 
-// Lazy import to avoid circular dependency
-// @ts-ignore - Dynamic import works in React Native runtime
-let getStoreState: (() => import('../../store/useStore').AppState) | null = null;
 let hydrationPromise: Promise<void> | null = null;
 
 async function ensureStore() {
-  if (!getStoreState) {
-    // @ts-ignore - Dynamic import works in React Native runtime
-    const storeModule = await import('../../store/useStore');
-    const store = storeModule.useStore;
-    getStoreState = () => store.getState();
-
-    // Wait for persist middleware to finish hydrating from storage
-    if (!hydrationPromise) {
-      if (store.persist.hasHydrated()) {
-        hydrationPromise = Promise.resolve();
-      } else {
-        hydrationPromise = new Promise<void>((resolve) => {
-          const unsub = store.persist.onFinishHydration(() => {
-            unsub();
-            resolve();
-          });
+  if (!hydrationPromise) {
+    if (useStore.persist.hasHydrated()) {
+      hydrationPromise = Promise.resolve();
+    } else {
+      hydrationPromise = new Promise<void>((resolve) => {
+        const unsub = useStore.persist.onFinishHydration(() => {
+          unsub();
+          resolve();
         });
-      }
+      });
     }
-    await hydrationPromise;
   }
-  return getStoreState();
+  await hydrationPromise;
+  return useStore.getState();
 }
 
 export async function getCurrentProvider(): Promise<AIProvider> {
@@ -59,10 +49,7 @@ export async function getCurrentProvider(): Promise<AIProvider> {
 }
 
 export async function setCurrentProvider(provider: AIProvider): Promise<void> {
-  // @ts-ignore - Dynamic import works in React Native runtime
-  const storeModule = await import('../../store/useStore');
-  // Use setState to update without calling the action
-  storeModule.useStore.setState({ currentProvider: provider });
+  useStore.setState({ currentProvider: provider });
 }
 
 export async function getProviderKeys(): Promise<ProviderKeys> {
@@ -71,11 +58,8 @@ export async function getProviderKeys(): Promise<ProviderKeys> {
 }
 
 export async function setProviderKeys(keys: ProviderKeys): Promise<void> {
-  // Update Zustand store in-memory state (triggers persist middleware to write snapmind-storage)
   try {
-    // @ts-ignore - Dynamic import works in React Native runtime
-    const storeModule = await import('../../store/useStore');
-    storeModule.useStore.setState({ providerKeys: keys });
+    useStore.setState({ providerKeys: keys });
   } catch (e) {
     console.error('[AI Storage] Failed to update store with provider keys:', e);
   }
@@ -99,9 +83,7 @@ export async function getProviderApiKey(provider: AIProvider): Promise<string> {
       const storedKeys = parsed?.state?.providerKeys;
       if (storedKeys?.[provider]) {
         // Sync back to in-memory store
-        // @ts-ignore - Dynamic import works in React Native runtime
-        const storeModule = await import('../../store/useStore');
-        storeModule.useStore.setState({ providerKeys: storedKeys });
+        useStore.setState({ providerKeys: storedKeys });
         return storedKeys[provider];
       }
     }
@@ -121,17 +103,12 @@ export async function getProviderApiKey(provider: AIProvider): Promise<string> {
 }
 
 export async function setProviderApiKey(provider: AIProvider, apiKey: string | null): Promise<void> {
-  // @ts-ignore - Dynamic import works in React Native runtime
-  const storeModule = await import('../../store/useStore');
-  const state = storeModule.useStore.getState();
+  const state = useStore.getState();
   const newKeys = {
     ...state.providerKeys,
     [provider]: apiKey,
   };
-  // Use setState to update without calling the action
-  storeModule.useStore.setState({
-    providerKeys: newKeys,
-  });
+  useStore.setState({ providerKeys: newKeys });
 }
 
 export async function getCurrentProviderConfig(): Promise<ProviderConfigWithKey> {
@@ -149,9 +126,7 @@ export async function getCurrentProviderConfig(): Promise<ProviderConfigWithKey>
         if (storedKeys?.[provider]) {
           apiKey = storedKeys[provider];
           // Sync back to in-memory store
-          // @ts-ignore - Dynamic import works in React Native runtime
-          const storeModule = await import('../../store/useStore');
-          storeModule.useStore.setState({ providerKeys: storedKeys });
+          useStore.setState({ providerKeys: storedKeys });
         }
       }
     } catch (e) {
