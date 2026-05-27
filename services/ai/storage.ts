@@ -26,13 +26,39 @@ function createEmptyProviderKeys(): ProviderKeys {
 
 let hydrationPromise: Promise<void> | null = null;
 
-async function ensureStore() {
+async function ensureStore(forceRehydrate = false) {
+  if (forceRehydrate && useStore.persist.hasHydrated()) {
+    console.log('[AI Storage] Force rehydrating...');
+    try {
+      if (typeof useStore.persist.rehydrate === 'function') {
+        await useStore.persist.rehydrate();
+        console.log('[AI Storage] Rehydrate complete');
+      } else {
+        // Fallback: manually read from storage and update store
+        const stored = await storageAdapter.getItem('snapmind-storage');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const storedState = parsed?.state;
+          if (storedState) {
+            console.log('[AI Storage] Manually restoring state from storage');
+            useStore.setState(storedState);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[AI Storage] Force rehydrate failed:', e);
+    }
+  }
+
   if (!hydrationPromise) {
     if (useStore.persist.hasHydrated()) {
       hydrationPromise = Promise.resolve();
+      console.log('[AI Storage] Hydration already complete, using resolved promise');
     } else {
+      console.log('[AI Storage] Waiting for hydration...');
       hydrationPromise = new Promise<void>((resolve) => {
         const unsub = useStore.persist.onFinishHydration(() => {
+          console.log('[AI Storage] Hydration finished');
           unsub();
           resolve();
         });
@@ -40,7 +66,9 @@ async function ensureStore() {
     }
   }
   await hydrationPromise;
-  return useStore.getState();
+  const state = useStore.getState();
+  console.log('[AI Storage] Current provider:', state.currentProvider, 'API key present:', !!state.providerKeys[state.currentProvider]);
+  return state;
 }
 
 export async function getCurrentProvider(): Promise<AIProvider> {
@@ -112,19 +140,36 @@ export async function setProviderApiKey(provider: AIProvider, apiKey: string | n
 }
 
 export async function getCurrentProviderConfig(): Promise<ProviderConfigWithKey> {
-  const state = await ensureStore();
+  let state = await ensureStore();
   const provider = state.currentProvider as AIProvider;
   let apiKey = state.providerKeys[provider];
 
+  console.log('[AI Storage] getCurrentProviderConfig - provider:', provider, 'apiKey from store:', !!apiKey);
+
   // Fallback: read directly from storage if key not in store memory
   if (!apiKey) {
+    console.log('[AI Storage] API key not in store, attempting force rehydrate...');
+    // Force rehydrate to get latest from storage
+    state = await ensureStore(true);
+    apiKey = state.providerKeys[provider];
+
+    if (apiKey) {
+      console.log('[AI Storage] API key found after force rehydrate!');
+    }
+  }
+
+  if (!apiKey) {
+    console.log('[AI Storage] Still no API key after rehydrate, reading file directly...');
     try {
       const stored = await storageAdapter.getItem('snapmind-storage');
+      console.log('[AI Storage] File exists:', !!stored);
       if (stored) {
         const parsed = JSON.parse(stored);
         const storedKeys = parsed?.state?.providerKeys;
+        console.log('[AI Storage] Keys from file:', storedKeys);
         if (storedKeys?.[provider]) {
           apiKey = storedKeys[provider];
+          console.log('[AI Storage] Found API key in file, syncing to store...');
           // Sync back to in-memory store
           useStore.setState({ providerKeys: storedKeys });
         }
@@ -136,10 +181,12 @@ export async function getCurrentProviderConfig(): Promise<ProviderConfigWithKey>
 
   if (!apiKey) {
     const config = PROVIDER_CONFIGS[provider as AIProvider];
+    console.error('[AI Storage] API key not found anywhere for provider:', provider);
     throw new Error(`${config.name} 未配置 API Key`);
   }
 
   const config = PROVIDER_CONFIGS[provider as AIProvider];
+  console.log('[AI Storage] Returning config for', config.name, 'with API key');
   return {
     ...config,
     apiKey,
