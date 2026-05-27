@@ -1,5 +1,3 @@
-import { getProviderApiKey, getCurrentProvider } from './storage';
-
 export type AIProvider =
   | 'openai'
   | 'dashscope'
@@ -63,15 +61,4 @@ export const DEFAULT_PROVIDER: AIProvider = 'dashscope';
 
 export interface ProviderConfigWithKey extends ProviderConfig {
   apiKey: string;
-}
-
-// 获取当前厂商的完整配置（包含 API Key）
-export async function getCurrentProviderConfig(): Promise<ProviderConfigWithKey> {
-  const provider = await getCurrentProvider();
-  const apiKey = await getProviderApiKey(provider);
-
-  return {
-    ...PROVIDER_CONFIGS[provider],
-    apiKey,
-  };
 }

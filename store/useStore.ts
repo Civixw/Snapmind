@@ -5,7 +5,6 @@ import { Screenshot, getAllScreenshots } from '../services/database';
 import { storageAdapter } from './persist';
 import type { AIProvider } from '../services/ai/config';
 import type { ProviderKeys } from '../services/ai/storage';
-import { setCurrentProvider as setProvider, setProviderApiKey } from '../services/ai/storage';
 
 interface AppState {
   // Data state
@@ -83,7 +82,6 @@ export const useStore = create<AppState>()(
       // Set current AI provider
       setCurrentProvider: async (provider) => {
         try {
-          await setProvider(provider);
           set({ currentProvider: provider });
         } catch (error) {
           console.error('Failed to set current provider:', error);
@@ -94,8 +92,6 @@ export const useStore = create<AppState>()(
       // Set provider API key
       setProviderKey: async (provider, apiKey) => {
         try {
-          await setProviderApiKey(provider, apiKey);
-
           set((state) => ({
             providerKeys: {
               ...state.providerKeys,

@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system';
-import { getCurrentProviderConfig } from './config';
+import { getCurrentProviderConfig } from './storage';
 
 const FETCH_TIMEOUT = 30000;
 

@@ -6,6 +6,7 @@ export * from './config';
 
 // 存储
 export * from './storage';
+export { getCurrentProviderConfig } from './storage';
 
 // 视觉分析
 export { analyzeScreenshot } from './vision';

@@ -1,9 +1,6 @@
-import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 import { storageAdapter } from '../../store/persist';
-import { AIProvider, PROVIDER_CONFIGS } from './config';
-
-const isWeb = Platform.OS === 'web';
+import type { AIProvider, ProviderConfigWithKey } from './config';
+import { PROVIDER_CONFIGS } from './config';
 
 export interface ProviderKeys {
   openai: string | null;
@@ -13,7 +10,6 @@ export interface ProviderKeys {
   openrouter: string | null;
 }
 
-const CURRENT_PROVIDER_KEY = 'snapmind_current_provider';
 const PROVIDER_KEYS_KEY = 'snapmind_provider_keys';
 const LEGACY_API_KEY_KEY = 'snapmind_api_key';
 
@@ -27,40 +23,34 @@ function createEmptyProviderKeys(): ProviderKeys {
   };
 }
 
-export async function getCurrentProvider(): Promise<AIProvider> {
-  try {
-    if (isWeb) {
-      const stored = localStorage.getItem(CURRENT_PROVIDER_KEY);
-      return (stored as AIProvider) || PROVIDER_CONFIGS.dashscope.id;
-    } else {
-      const fileUri = `${FileSystem.documentDirectory}${CURRENT_PROVIDER_KEY}.txt`;
-      const content = await FileSystem.readAsStringAsync(fileUri);
-      return content as AIProvider;
-    }
-  } catch {
-    return PROVIDER_CONFIGS.dashscope.id;
+// Lazy import to avoid circular dependency
+// @ts-ignore - Dynamic import works in React Native runtime
+let getStoreState: () => import('../../store/useStore').AppState | null = null;
+
+async function ensureStore() {
+  if (!getStoreState) {
+    // @ts-ignore - Dynamic import works in React Native runtime
+    const storeModule = await import('../../store/useStore');
+    getStoreState = () => storeModule.useStore.getState();
   }
+  return getStoreState();
+}
+
+export async function getCurrentProvider(): Promise<AIProvider> {
+  const state = await ensureStore();
+  return state.currentProvider as AIProvider;
 }
 
 export async function setCurrentProvider(provider: AIProvider): Promise<void> {
-  if (isWeb) {
-    localStorage.setItem(CURRENT_PROVIDER_KEY, provider);
-  } else {
-    const fileUri = `${FileSystem.documentDirectory}${CURRENT_PROVIDER_KEY}.txt`;
-    await FileSystem.writeAsStringAsync(fileUri, provider);
-  }
+  // @ts-ignore - Dynamic import works in React Native runtime
+  const storeModule = await import('../../store/useStore');
+  // Use setState to update without calling the action
+  storeModule.useStore.setState({ currentProvider: provider });
 }
 
 export async function getProviderKeys(): Promise<ProviderKeys> {
-  try {
-    const stored = await storageAdapter.getItem(PROVIDER_KEYS_KEY);
-    if (stored) {
-      return JSON.parse(stored) as ProviderKeys;
-    }
-    return createEmptyProviderKeys();
-  } catch {
-    return createEmptyProviderKeys();
-  }
+  const state = await ensureStore();
+  return state.providerKeys;
 }
 
 export async function setProviderKeys(keys: ProviderKeys): Promise<void> {
@@ -68,7 +58,8 @@ export async function setProviderKeys(keys: ProviderKeys): Promise<void> {
 }
 
 export async function getProviderApiKey(provider: AIProvider): Promise<string> {
-  const providerKeys = await getProviderKeys();
+  const state = await ensureStore();
+  const providerKeys = state.providerKeys;
   const key = providerKeys[provider];
 
   if (key) {
@@ -87,9 +78,33 @@ export async function getProviderApiKey(provider: AIProvider): Promise<string> {
 }
 
 export async function setProviderApiKey(provider: AIProvider, apiKey: string | null): Promise<void> {
-  const keys = await getProviderKeys();
-  keys[provider] = apiKey;
-  await setProviderKeys(keys);
+  // @ts-ignore - Dynamic import works in React Native runtime
+  const storeModule = await import('../../store/useStore');
+  const state = storeModule.useStore.getState();
+  // Use setState to update without calling the action
+  storeModule.useStore.setState({
+    providerKeys: {
+      ...state.providerKeys,
+      [provider]: apiKey,
+    },
+  });
+}
+
+export async function getCurrentProviderConfig(): Promise<ProviderConfigWithKey> {
+  const state = await ensureStore();
+  const provider = state.currentProvider as AIProvider;
+  const apiKey = state.providerKeys[provider];
+
+  if (!apiKey) {
+    const config = PROVIDER_CONFIGS[provider as AIProvider];
+    throw new Error(`${config.name} 未配置 API Key`);
+  }
+
+  const config = PROVIDER_CONFIGS[provider as AIProvider];
+  return {
+    ...config,
+    apiKey,
+  };
 }
 
 export async function migrateApiKeyIfNecessary(): Promise<void> {
