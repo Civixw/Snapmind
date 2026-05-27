@@ -44,7 +44,7 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     const versionResult = await db.getFirstAsync<{ user_version: number }>(
       'PRAGMA user_version'
     );
-    const currentVersion = versionResult?.user_version ?? 0;
+    let currentVersion = versionResult?.user_version ?? 0;
     console.log('[DB] Current database version:', currentVersion);
 
     // 检查是否需要迁移（检查rowid列是否存在）
