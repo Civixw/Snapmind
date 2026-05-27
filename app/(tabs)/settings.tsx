@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -11,6 +11,7 @@ import { useStore } from '../../store';
 import { deleteImage } from '../../services/image';
 import { colors, borderRadius, shadows } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { PROVIDER_CONFIGS, type AIProvider } from '../../services/ai/config';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -25,15 +26,19 @@ export default function SettingsScreen() {
     fileCount: 0,
     formatted: '...',
   });
-  const apiKey = useStore(state => state.apiKey);
-  const setApiKey = useStore(state => state.setApiKey);
-  const [showKey, setShowKey] = useState(false);
-  const [inputValue, setInputValue] = useState(apiKey);
+  const [showProviderPicker, setShowProviderPicker] = useState(false);
 
-  // Update input when apiKey changes from storage
+  const currentProvider = useStore(state => state.currentProvider);
+  const providerKeys = useStore(state => state.providerKeys);
+  const setCurrentProvider = useStore(state => state.setCurrentProvider);
+  const setProviderKey = useStore(state => state.setProviderKey);
+  const [showKey, setShowKey] = useState(false);
+  const [inputValue, setInputValue] = useState(providerKeys[currentProvider] || '');
+
+  // Update input when provider changes
   useEffect(() => {
-    setInputValue(apiKey);
-  }, [apiKey]);
+    setInputValue(providerKeys[currentProvider] || '');
+  }, [currentProvider, providerKeys]);
 
   const loadStorageInfo = async () => {
     if (isLoadingRef.current) {
@@ -61,9 +66,17 @@ export default function SettingsScreen() {
   );
 
   const handleSaveKey = async () => {
-    await setApiKey(inputValue.trim());
-    alert('API Key 已保存');
+    await setProviderKey(currentProvider, inputValue.trim());
+    Alert.alert('成功', `${PROVIDER_CONFIGS[currentProvider].name} API Key 已保存`);
   };
+
+  const providerList: { id: AIProvider; displayName: string }[] = [
+    { id: 'openai', displayName: 'OpenAI' },
+    { id: 'dashscope', displayName: '阿里云百炼' },
+    { id: 'zhipu', displayName: '智谱GLM' },
+    { id: 'deepseek', displayName: 'DeepSeek' },
+    { id: 'openrouter', displayName: 'OpenRouter' },
+  ];
 
   const handleClearAllData = async () => {
     Alert.alert(
@@ -153,20 +166,38 @@ export default function SettingsScreen() {
         </GlassCard>
       </View>
 
-      {/* API Key */}
+      {/* AI Provider Selector */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>智能引擎</Text>
         <GlassCard style={styles.apiCard}>
           <View style={styles.apiHeader}>
+            <Ionicons name="server" size={20} color={colors.primary} />
+            <Text style={[styles.apiTitle, { color: colors.onSurface }]}>当前使用厂商</Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.providerSelector, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.surfaceContainerHigh }]}
+            onPress={() => setShowProviderPicker(true)}
+          >
+            <Text style={[styles.providerSelectorText, { color: colors.onSurface }]}>
+              {PROVIDER_CONFIGS[currentProvider].name}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: colors.outlineVariant, marginTop: 16, marginBottom: 16 }]} />
+
+          <View style={styles.apiHeader}>
             <Ionicons name="key" size={20} color={colors.primary} />
             <Text style={[styles.apiTitle, { color: colors.onSurface }]}>API Key 配置</Text>
           </View>
-          <View style={[styles.apiInputRow, { backgroundColor: colors.surfaceVariant, borderColor: colors.surfaceContainerHigh }]}>
+
+          <View style={[styles.apiInputRow, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.surfaceContainerHigh }]}>
             <TextInput
               style={[styles.apiInput, { color: colors.onSurface }]}
               value={inputValue}
               onChangeText={setInputValue}
-              placeholder="输入您的 API 密钥"
+              placeholder={`输入 ${PROVIDER_CONFIGS[currentProvider].name} 的 API 密钥`}
               placeholderTextColor={colors.onSurfaceVariant}
               secureTextEntry={!showKey}
               autoCapitalize="none"
@@ -179,10 +210,17 @@ export default function SettingsScreen() {
               />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleSaveKey} style={[styles.saveKeyBtn, { backgroundColor: colors.primary }]}>
+
+          <TouchableOpacity
+            onPress={() => handleSaveKey()}
+            style={[styles.saveKeyBtn, { backgroundColor: colors.primary }]}
+          >
             <Text style={styles.saveKeyBtnText}>保存</Text>
           </TouchableOpacity>
-          <Text style={[styles.apiHint, { color: colors.onSurfaceVariant }]}>用于启用高级 AI 分析和自动标签功能。</Text>
+
+          <Text style={[styles.apiHint, { color: colors.onSurfaceVariant }]}>
+            💡 一个 API Key 可同时用于视觉分析和向量搜索
+          </Text>
         </GlassCard>
       </View>
 
@@ -190,14 +228,6 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}>通用</Text>
         <GlassCard style={styles.generalCard}>
-          <TouchableOpacity style={settingStyles.row}>
-            <View style={settingStyles.rowLeft}>
-              <Ionicons name="notifications-outline" size={20} color={colors.onSurfaceVariant} />
-              <Text style={[settingStyles.rowLabel, { color: colors.onSurface }]}>通知设置</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceVariant} />
-          </TouchableOpacity>
-          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={settingStyles.row} onPress={() => router.push('/settings/appearance')}>
             <View style={settingStyles.rowLeft}>
               <Ionicons name="color-palette-outline" size={20} color={colors.onSurfaceVariant} />
@@ -205,7 +235,6 @@ export default function SettingsScreen() {
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
-          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={settingStyles.row} onPress={() => router.push('/settings/privacy')}>
             <View style={settingStyles.rowLeft}>
               <Ionicons name="shield-outline" size={20} color={colors.onSurfaceVariant} />
@@ -253,6 +282,54 @@ export default function SettingsScreen() {
       </View>
 
     </ScrollView>
+
+    {/* Provider Picker Modal */}
+    <Modal
+      visible={showProviderPicker}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowProviderPicker(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={[styles.modalTitle]}>选择 AI 厂商</Text>
+
+          {providerList.map((provider) => (
+            <TouchableOpacity
+              key={provider.id}
+              style={[
+                styles.providerOption,
+                currentProvider === provider.id && { backgroundColor: colors.primary + '20', borderWidth: 1, borderColor: colors.primary },
+              ]}
+              onPress={async () => {
+                await setCurrentProvider(provider.id);
+                setShowProviderPicker(false);
+                setInputValue(providerKeys[provider.id] || '');
+              }}
+            >
+              <Text
+                style={[
+                  styles.providerOptionText,
+                  currentProvider === provider.id && { color: colors.primary },
+                ]}
+              >
+                {provider.displayName}
+              </Text>
+              {currentProvider === provider.id && (
+                <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            style={styles.modalCancelButton}
+            onPress={() => setShowProviderPicker(false)}
+          >
+            <Text style={styles.modalCancelText}>取消</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
     </View>
   );
 }
@@ -333,6 +410,66 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   logoutText: { fontSize: 16, fontWeight: '500' },
+  providerSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderWidth: 1,
+  },
+  providerSelectorText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+    color: '#000',
+  },
+  providerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginBottom: 8,
+    backgroundColor: '#F5F5F5',
+  },
+  providerOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+  },
+  modalCancelButton: {
+    paddingVertical: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: '#F5F5F5',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+  },
 });
 
 const settingStyles = StyleSheet.create({

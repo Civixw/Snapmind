@@ -20,6 +20,7 @@ import { colors } from '../constants/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useStore } from '../store';
 import { backfillImportanceScores, recalculateAllScores } from '../services/scoring';
+import { migrateApiKeyIfNecessary } from '../services/ai';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { PrivacyProvider } from '../contexts/PrivacyContext';
 
@@ -109,6 +110,13 @@ export default function RootLayout() {
   // Initialize store on app mount
   useEffect(() => {
     const initializeApp = async () => {
+      try {
+        // Migrate legacy API key format to multi-provider format
+        await migrateApiKeyIfNecessary();
+      } catch (error) {
+        console.error('[Init] Failed to migrate API key:', error);
+      }
+
       try {
         // One-time backfill for existing screenshots without importance scores
         await backfillImportanceScores();

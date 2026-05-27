@@ -3,11 +3,15 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Screenshot, getAllScreenshots } from '../services/database';
 import { storageAdapter } from './persist';
+import type { AIProvider } from '../services/ai/config';
+import type { ProviderKeys } from '../services/ai/storage';
+import { setCurrentProvider as setProvider, setProviderApiKey } from '../services/ai/storage';
 
 interface AppState {
   // Data state
   screenshots: Screenshot[];
-  apiKey: string;
+  currentProvider: AIProvider;
+  providerKeys: ProviderKeys;
   recentSearches: string[];
 
   // Actions
@@ -16,7 +20,8 @@ interface AppState {
   addScreenshots: (newScreenshots: Screenshot[]) => void;
   removeScreenshot: (id: string) => void;
   clearAllScreenshots: () => void;
-  setApiKey: (key: string) => Promise<void>;
+  setCurrentProvider: (provider: AIProvider) => Promise<void>;
+  setProviderKey: (provider: AIProvider, apiKey: string | null) => Promise<void>;
   addRecentSearch: (query: string) => void;
   clearRecentSearches: () => void;
 }
@@ -26,7 +31,14 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       // Initial state
       screenshots: [],
-      apiKey: '',
+      currentProvider: 'dashscope',
+      providerKeys: {
+        openai: null,
+        dashscope: null,
+        zhipu: null,
+        deepseek: null,
+        openrouter: null,
+      },
       recentSearches: [],
 
       // Load initial data from database
@@ -68,13 +80,30 @@ export const useStore = create<AppState>()(
         set({ screenshots: [] });
       },
 
-      // Save API key to storage and update state
-      setApiKey: async (key) => {
+      // Set current AI provider
+      setCurrentProvider: async (provider) => {
         try {
-          await storageAdapter.setItem('snapmind_api_key', key);
-          set({ apiKey: key });
+          await setProvider(provider);
+          set({ currentProvider: provider });
         } catch (error) {
-          console.error('Failed to save API key:', error);
+          console.error('Failed to set current provider:', error);
+          throw error;
+        }
+      },
+
+      // Set provider API key
+      setProviderKey: async (provider, apiKey) => {
+        try {
+          await setProviderApiKey(provider, apiKey);
+
+          set((state) => ({
+            providerKeys: {
+              ...state.providerKeys,
+              [provider]: apiKey,
+            },
+          }));
+        } catch (error) {
+          console.error('Failed to save provider API key:', error);
           throw error;
         }
       },
@@ -101,9 +130,10 @@ export const useStore = create<AppState>()(
     {
       name: 'snapmind-storage',
       storage: createJSONStorage(() => storageAdapter),
-      // Only persist apiKey and recentSearches, not screenshots (from DB)
+      // Only persist currentProvider, providerKeys, and recentSearches, not screenshots (from DB)
       partialize: (state) => ({
-        apiKey: state.apiKey,
+        currentProvider: state.currentProvider,
+        providerKeys: state.providerKeys,
         recentSearches: state.recentSearches,
       }),
     }
