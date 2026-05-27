@@ -9,7 +9,10 @@
     },
     "preview": {
       "distribution": "internal",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildArtifactName": "SnapMind.apk"
+      }
     },
     "development": {
       "developmentClient": true,
