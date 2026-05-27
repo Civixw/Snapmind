@@ -71,7 +71,14 @@ export async function getProviderKeys(): Promise<ProviderKeys> {
 }
 
 export async function setProviderKeys(keys: ProviderKeys): Promise<void> {
-  await storageAdapter.setItem(PROVIDER_KEYS_KEY, JSON.stringify(keys));
+  // Update Zustand store in-memory state (triggers persist middleware to write snapmind-storage)
+  try {
+    // @ts-ignore - Dynamic import works in React Native runtime
+    const storeModule = await import('../../store/useStore');
+    storeModule.useStore.setState({ providerKeys: keys });
+  } catch (e) {
+    console.error('[AI Storage] Failed to update store with provider keys:', e);
+  }
 }
 
 export async function getProviderApiKey(provider: AIProvider): Promise<string> {
@@ -81,6 +88,25 @@ export async function getProviderApiKey(provider: AIProvider): Promise<string> {
 
   if (key) {
     return key;
+  }
+
+  // Fallback: read directly from storage in case Zustand store state is stale
+  // This can happen on first install when persist middleware hasn't fully synced
+  try {
+    const stored = await storageAdapter.getItem('snapmind-storage');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      const storedKeys = parsed?.state?.providerKeys;
+      if (storedKeys?.[provider]) {
+        // Sync back to in-memory store
+        // @ts-ignore - Dynamic import works in React Native runtime
+        const storeModule = await import('../../store/useStore');
+        storeModule.useStore.setState({ providerKeys: storedKeys });
+        return storedKeys[provider];
+      }
+    }
+  } catch (e) {
+    console.error('[AI Storage] Fallback storage read failed:', e);
   }
 
   const oldKey = await storageAdapter.getItem(LEGACY_API_KEY_KEY);
@@ -98,19 +124,40 @@ export async function setProviderApiKey(provider: AIProvider, apiKey: string | n
   // @ts-ignore - Dynamic import works in React Native runtime
   const storeModule = await import('../../store/useStore');
   const state = storeModule.useStore.getState();
+  const newKeys = {
+    ...state.providerKeys,
+    [provider]: apiKey,
+  };
   // Use setState to update without calling the action
   storeModule.useStore.setState({
-    providerKeys: {
-      ...state.providerKeys,
-      [provider]: apiKey,
-    },
+    providerKeys: newKeys,
   });
 }
 
 export async function getCurrentProviderConfig(): Promise<ProviderConfigWithKey> {
   const state = await ensureStore();
   const provider = state.currentProvider as AIProvider;
-  const apiKey = state.providerKeys[provider];
+  let apiKey = state.providerKeys[provider];
+
+  // Fallback: read directly from storage if key not in store memory
+  if (!apiKey) {
+    try {
+      const stored = await storageAdapter.getItem('snapmind-storage');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const storedKeys = parsed?.state?.providerKeys;
+        if (storedKeys?.[provider]) {
+          apiKey = storedKeys[provider];
+          // Sync back to in-memory store
+          // @ts-ignore - Dynamic import works in React Native runtime
+          const storeModule = await import('../../store/useStore');
+          storeModule.useStore.setState({ providerKeys: storedKeys });
+        }
+      }
+    } catch (e) {
+      console.error('[AI Storage] Fallback storage read failed:', e);
+    }
+  }
 
   if (!apiKey) {
     const config = PROVIDER_CONFIGS[provider as AIProvider];
