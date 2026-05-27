@@ -25,13 +25,30 @@ function createEmptyProviderKeys(): ProviderKeys {
 
 // Lazy import to avoid circular dependency
 // @ts-ignore - Dynamic import works in React Native runtime
-let getStoreState: () => import('../../store/useStore').AppState | null = null;
+let getStoreState: (() => import('../../store/useStore').AppState) | null = null;
+let hydrationPromise: Promise<void> | null = null;
 
 async function ensureStore() {
   if (!getStoreState) {
     // @ts-ignore - Dynamic import works in React Native runtime
     const storeModule = await import('../../store/useStore');
-    getStoreState = () => storeModule.useStore.getState();
+    const store = storeModule.useStore;
+    getStoreState = () => store.getState();
+
+    // Wait for persist middleware to finish hydrating from storage
+    if (!hydrationPromise) {
+      if (store.persist.hasHydrated()) {
+        hydrationPromise = Promise.resolve();
+      } else {
+        hydrationPromise = new Promise<void>((resolve) => {
+          const unsub = store.persist.onFinishHydration(() => {
+            unsub();
+            resolve();
+          });
+        });
+      }
+    }
+    await hydrationPromise;
   }
   return getStoreState();
 }
