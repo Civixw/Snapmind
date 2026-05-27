@@ -45,6 +45,7 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       'PRAGMA user_version'
     );
     const currentVersion = versionResult?.user_version ?? 0;
+    console.log('[DB] Current database version:', currentVersion);
 
     // 检查是否需要迁移（检查rowid列是否存在）
     const tableInfo = await db.getFirstAsync<{ sql: string }>(
@@ -127,6 +128,7 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 
     // Sequential migrations - must run in order
     // Migration for user_interactions table (version 2)
+    console.log('[DB] Checking migration: currentVersion =', currentVersion, 'USER_INTERACTIONS_VERSION =', USER_INTERACTIONS_VERSION);
     if (currentVersion < USER_INTERACTIONS_VERSION) {
       console.log('[DB] Migrating to version', USER_INTERACTIONS_VERSION, '- creating user_interactions table');
       try {
